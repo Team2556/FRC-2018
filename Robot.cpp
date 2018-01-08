@@ -62,6 +62,16 @@ public:
 	 * well.
 	 */
 	void AutonomousInit() override {
+		
+		std::string gameData;
+		gameData = frc::DriverStation::GetInstance().GetGameSpecificMessage();
+		if(gameData[0] == 'L')
+		{
+			//Put left auto code here
+		} else {
+			//Put right auto code here
+		}
+		
 		m_autoSelected = m_chooser.GetSelected();
 		// m_autoSelected = SmartDashboard::GetString(
 		// 		"Auto Selector", kAutoNameDefault);
