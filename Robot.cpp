@@ -15,29 +15,58 @@
 #include <SmartDashboard/SmartDashboard.h>
 #include "RobotDrive.h"
 #include "XboxController.h"
+#include "CANTalon.h"
 class Robot: public frc::IterativeRobot {
-	//Motor controllers set up
-	Victor * 	pclDriveMotorL;
-	Victor *	pclDriveMotorR;
+	const int PDP = 2;
+	const int PCM = 1;
 
+
+	//Motor controllers set up
+	//Victor * 	pclDriveMotorFL;
+	//Victor *	pclDriveMotorFR;
+	//Victor *	pclDriveMotorBR;
+	//Victor * 	pclDriveMotorBL;
 	RobotDrive *	pclRobotDrive;
+	RobotDrive *	pclRobotDrive2;
+
 	//XboxController* 	pclXbox;
 	Joystick *	pclJoystick;
+	Joystick *	pclJoystick2;
 
+	std::unique_ptr<CANTalon> _FrontLeft;
+			std::unique_ptr<CANTalon> _FrontRight;
+			std::unique_ptr<CANTalon> _BackLeft;
+			std::unique_ptr<CANTalon> _BackRight;
+
+
+	const int FRONT_LEFT_MOTOR = 6;
+	const int FRONT_RIGHT_MOTOR = 15;
+
+	const int BACK_LEFT_MOTOR = 5;
+	const int BACK_RIGHT_MOTOR = 14;
 
 public:
 	Robot()
 		{
 			//Initial Drive controllers
-			pclDriveMotorR = new Victor(1);
-			pclDriveMotorL = new Victor(0);
+			//pclDriveMotorFR = new Victor(1);
+			//pclDriveMotorFL = new Victor(0);
+			//pclDriveMotorBR = new Victor(2);
+			//pclDriveMotorBL = new Victor(3);
+
+		_FrontLeft.reset(new CANTalon(FRONT_LEFT_MOTOR));
+		_FrontRight.reset(new CANTalon(FRONT_RIGHT_MOTOR));
+		_BackLeft.reset(new CANTalon(BACK_LEFT_MOTOR));
+		_BackRight.reset(new CANTalon(BACK_RIGHT_MOTOR));
 
 			//Initial the robot drive
-			pclRobotDrive	= new RobotDrive(pclDriveMotorR,pclDriveMotorL);
+			pclRobotDrive	= new RobotDrive(FRONT_LEFT_MOTOR,BACK_LEFT_MOTOR);
+			pclRobotDrive2	= new RobotDrive(FRONT_RIGHT_MOTOR,BACK_RIGHT_MOTOR);
 
 			//Initial the joy-stick and inputs
 			//pclXbox = new XboxController(0);
 			pclJoystick = new Joystick(0);
+			pclJoystick2 = new Joystick(1);
 
 
 		}
@@ -62,16 +91,7 @@ public:
 	 * well.
 	 */
 	void AutonomousInit() override {
-		
-		std::string gameData;
-		gameData = frc::DriverStation::GetInstance().GetGameSpecificMessage();
-		if(gameData[0] == 'L')
-		{
-			//Put left auto code here
-		} else {
-			//Put right auto code here
-		}
-		
+
 		m_autoSelected = m_chooser.GetSelected();
 		// m_autoSelected = SmartDashboard::GetString(
 		// 		"Auto Selector", kAutoNameDefault);
@@ -96,6 +116,7 @@ public:
 
 	void TeleopPeriodic() {
 		pclRobotDrive->ArcadeDrive(pclJoystick,0);
+		pclRobotDrive2->ArcadeDrive(pclJoystick2,0);
 	}
 
 	void TestPeriodic() {}
