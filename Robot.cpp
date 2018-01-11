@@ -15,10 +15,12 @@
 #include <SmartDashboard/SmartDashboard.h>
 #include "RobotDrive.h"
 #include "XboxController.h"
-#include "CANTalon.h"
+#include "ctre/Phoenix.h"
+#include "MotorSafetyHelper.h"
 class Robot: public frc::IterativeRobot {
-	const int PDP = 2;
-	const int PCM = 1;
+
+	//const int PDP = 2;
+	//const int PCM = 1;
 
 
 	//Motor controllers set up
@@ -26,24 +28,35 @@ class Robot: public frc::IterativeRobot {
 	//Victor *	pclDriveMotorFR;
 	//Victor *	pclDriveMotorBR;
 	//Victor * 	pclDriveMotorBL;
+	
+	//Set up Drive trains
 	RobotDrive *	pclRobotDrive;
 	RobotDrive *	pclRobotDrive2;
 
+	//set up controllers
 	//XboxController* 	pclXbox;
 	Joystick *	pclJoystick;
 	Joystick *	pclJoystick2;
 
-	std::unique_ptr<CANTalon> _FrontLeft;
-			std::unique_ptr<CANTalon> _FrontRight;
-			std::unique_ptr<CANTalon> _BackLeft;
-			std::unique_ptr<CANTalon> _BackRight;
+			/*std::unique_ptr<TalonSRX> _FrontLeft;
+			std::unique_ptr<TalonSRX> _FrontRight;
+			std::unique_ptr<TalonSRX> _BackLeft;
+			std::unique_ptr<TalonSRX> _BackRight;*/
+
+	//set up motor controllers
+	WPI_TalonSRX *lf = new WPI_TalonSRX(0); /*left front */
+	WPI_TalonSRX *lr = new WPI_TalonSRX(1);/*left rear */
+	WPI_TalonSRX *rf = new WPI_TalonSRX(2); /*right front */
+	WPI_TalonSRX *rr = new WPI_TalonSRX(3); /*right rear */
 
 
-	const int FRONT_LEFT_MOTOR = 6;
-	const int FRONT_RIGHT_MOTOR = 15;
+			/*const int FRONT_LEFT_MOTOR = 0;
+			const int FRONT_RIGHT_MOTOR = 13;
 
-	const int BACK_LEFT_MOTOR = 5;
-	const int BACK_RIGHT_MOTOR = 14;
+			const int BACK_LEFT_MOTOR = 1;
+			const int BACK_RIGHT_MOTOR = 14;*/
+
+
 
 public:
 	Robot()
@@ -54,14 +67,20 @@ public:
 			//pclDriveMotorBR = new Victor(2);
 			//pclDriveMotorBL = new Victor(3);
 
-		_FrontLeft.reset(new CANTalon(FRONT_LEFT_MOTOR));
-		_FrontRight.reset(new CANTalon(FRONT_RIGHT_MOTOR));
-		_BackLeft.reset(new CANTalon(BACK_LEFT_MOTOR));
-		_BackRight.reset(new CANTalon(BACK_RIGHT_MOTOR));
+		/*_FrontLeft(new TalonSRX(FRONT_LEFT_MOTOR));
+		_FrontRight(new TalonSRX(FRONT_RIGHT_MOTOR));
+		_BackLeft(new TalonSRX(BACK_LEFT_MOTOR));
+		_BackRight(new TalonSRX(BACK_RIGHT_MOTOR));*/
+
+				//reset motor safety timeout//
+				lf->Set(ControlMode::PercentOutput, 0);
+				lr->Set(ControlMode::PercentOutput, 0);
+				rf->Set(ControlMode::PercentOutput, 0);
+				rr->Set(ControlMode::PercentOutput, 0);
 
 			//Initial the robot drive
-			pclRobotDrive	= new RobotDrive(FRONT_LEFT_MOTOR,BACK_LEFT_MOTOR);
-			pclRobotDrive2	= new RobotDrive(FRONT_RIGHT_MOTOR,BACK_RIGHT_MOTOR);
+			pclRobotDrive	= new RobotDrive(lf,lr);
+			pclRobotDrive2	= new RobotDrive(rf,rr);
 
 			//Initial the joy-stick and inputs
 			//pclXbox = new XboxController(0);
@@ -105,7 +124,7 @@ public:
 	}
 
 	void AutonomousPeriodic() {
-		if (m_autoSelected == kAutoNameCustom) {
+		if (m_autoSelected == kAutoNameCustom) {  
 			// Custom Auto goes here
 		} else {
 			// Default Auto goes here
@@ -115,6 +134,7 @@ public:
 	void TeleopInit() {}
 
 	void TeleopPeriodic() {
+		//driving robot in teleop phase
 		pclRobotDrive->ArcadeDrive(pclJoystick,0);
 		pclRobotDrive2->ArcadeDrive(pclJoystick2,0);
 	}
