@@ -19,16 +19,6 @@
 #include "MotorSafetyHelper.h"
 class Robot: public frc::IterativeRobot {
 
-	//const int PDP = 2;
-	//const int PCM = 1;
-
-
-	//Motor controllers set up
-	//Victor * 	pclDriveMotorFL;
-	//Victor *	pclDriveMotorFR;
-	//Victor *	pclDriveMotorBR;
-	//Victor * 	pclDriveMotorBL;
-	
 	//Set up Drive trains
 	RobotDrive *	pclRobotDrive;
 	RobotDrive *	pclRobotDrive2;
@@ -38,11 +28,6 @@ class Robot: public frc::IterativeRobot {
 	Joystick *	pclJoystick;
 	Joystick *	pclJoystick2;
 
-			/*std::unique_ptr<TalonSRX> _FrontLeft;
-			std::unique_ptr<TalonSRX> _FrontRight;
-			std::unique_ptr<TalonSRX> _BackLeft;
-			std::unique_ptr<TalonSRX> _BackRight;*/
-
 	//set up motor controllers
 	WPI_TalonSRX *lf = new WPI_TalonSRX(0); /*left front */
 	WPI_TalonSRX *lr = new WPI_TalonSRX(1);/*left rear */
@@ -50,28 +35,9 @@ class Robot: public frc::IterativeRobot {
 	WPI_TalonSRX *rr = new WPI_TalonSRX(3); /*right rear */
 
 
-			/*const int FRONT_LEFT_MOTOR = 0;
-			const int FRONT_RIGHT_MOTOR = 13;
-
-			const int BACK_LEFT_MOTOR = 1;
-			const int BACK_RIGHT_MOTOR = 14;*/
-
-
-
 public:
 	Robot()
 		{
-			//Initial Drive controllers
-			//pclDriveMotorFR = new Victor(1);
-			//pclDriveMotorFL = new Victor(0);
-			//pclDriveMotorBR = new Victor(2);
-			//pclDriveMotorBL = new Victor(3);
-
-		/*_FrontLeft(new TalonSRX(FRONT_LEFT_MOTOR));
-		_FrontRight(new TalonSRX(FRONT_RIGHT_MOTOR));
-		_BackLeft(new TalonSRX(BACK_LEFT_MOTOR));
-		_BackRight(new TalonSRX(BACK_RIGHT_MOTOR));*/
-
 				//reset motor safety timeout//
 				lf->Set(ControlMode::PercentOutput, 0);
 				lr->Set(ControlMode::PercentOutput, 0);
@@ -124,7 +90,7 @@ public:
 	}
 
 	void AutonomousPeriodic() {
-		if (m_autoSelected == kAutoNameCustom) {  
+		if (m_autoSelected == kAutoNameCustom) {
 			// Custom Auto goes here
 		} else {
 			// Default Auto goes here
