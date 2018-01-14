@@ -47,43 +47,61 @@ class Robot: public frc::IterativeRobot {
 	cs::UsbCamera				UsbCamera1;
 
 
+// ----------------------------------------------------------------------------
+// Initialization
+// ----------------------------------------------------------------------------
+
+// Constructor
+// -----------
+
 public:
 	Robot()
 		{
-				//reset motor safety timeout//
-				lf->Set(ControlMode::PercentOutput, 0);
-				lr->Set(ControlMode::PercentOutput, 0);
-				rf->Set(ControlMode::PercentOutput, 0);
-				rr->Set(ControlMode::PercentOutput, 0);
+		//reset motor safety timeout//
+		lf->Set(ControlMode::PercentOutput, 0);
+		lr->Set(ControlMode::PercentOutput, 0);
+		rf->Set(ControlMode::PercentOutput, 0);
+		rr->Set(ControlMode::PercentOutput, 0);
 
-				//Initial the robot drive
-				//Sets the different motor controllers for the drivebase
-				m_robotDrive = new MecanumDrive(*lf, *lr, *rf, *rr);
-				//sets the safety time out for the motor safety feature on the motors (This is required by FIRST)
-				m_robotDrive->SetExpiration(0.5);
-				//This is for Power consumption and is not as important but still needs to be in the code
-				m_robotDrive->SetSafetyEnabled(false);
+		//Initial the robot drive
+		//Sets the different motor controllers for the drivebase
+		m_robotDrive = new MecanumDrive(*lf, *lr, *rf, *rr);
 
-			//Initial the joy-stick and inputs as well as the Xbox controllers
-			//The values found in the () are for the USB ports that you can change in the Driver Station
-			pclXbox = new XboxController(0);
-			pclXbox2 = new XboxController(1);
-			//The Joystick is for the potential of the future and not for the robot  as of right now 1/12/18
-			pclJoystick = new Joystick(0);
+		//sets the safety time out for the motor safety feature on the motors (This is required by FIRST)
+		m_robotDrive->SetExpiration(0.5);
 
-			//Setting up Pneumatic
-			pclSolenoid = new DoubleSolenoid(PCM,0,1);
+		//This is for Power consumption and is not as important but still needs to be in the code
+		m_robotDrive->SetSafetyEnabled(false);
+
+		//Initial the joy-stick and inputs as well as the Xbox controllers
+		//The values found in the () are for the USB ports that you can change in the Driver Station
+		pclXbox  = new XboxController(0);
+		pclXbox2 = new XboxController(1);
+
+		//The Joystick is for the potential of the future and not for the robot  as of right now 1/12/18
+		pclJoystick = new Joystick(0);
+
+		//Setting up Pneumatic
+		pclSolenoid = new DoubleSolenoid(PCM,0,1);
+
+		} // end Robot class constructor
 
 
+// Robot Initialization
+// --------------------
 
-		}
 	void RobotInit() {
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
 		m_chooser.AddObject(kAutoNameCustom, kAutoNameCustom);
 		UsbCamera1 = CameraServer::GetInstance()->StartAutomaticCapture();
 		UsbCamera1.SetResolution(160, 120);
 		UsbCamera1.SetFPS(5);
-	}
+	} // end RobotInit()
+
+
+// ----------------------------------------------------------------------------
+// Autonomous Mode
+// ----------------------------------------------------------------------------
 
 	/*
 	 * This autonomous (along with the chooser code above) shows how to
@@ -111,7 +129,11 @@ public:
 		} else {
 			// Default Auto goes here
 		}
-	}
+	} // end AutonomousInit()
+
+
+
+// ----------------------------------------------------------------------------
 
 	void AutonomousPeriodic() {
 		std::string sliderString ;
@@ -129,10 +151,17 @@ public:
 		SmartDashboard::PutString("DB/String 1", sliderString2.c_str());
 		m_robotDrive->DriveCartesian(0, dSliderForRev,0,0 );
 
+	} // end AutonomousPeriodic()
 
-	}
+
+// ----------------------------------------------------------------------------
+// Teleop Mode
+// ----------------------------------------------------------------------------
 
 	void TeleopInit() {}
+
+
+// ----------------------------------------------------------------------------
 
 	void TeleopPeriodic() {
 		//driving robot in teleop phase
@@ -142,13 +171,22 @@ public:
 		//The Different joysticks on the controller can be defined like it is below, something to consider though, the way the WPIlib says to set up a drivetrain like this you ddo GetY the GetX
 		//But this is backward. And the foward and backward is inversed so multiplying the joystick value by -1 should fix all errors with this issue*/
 		m_robotDrive->DriveCartesian(pclXbox->GetX(frc::XboxController::kLeftHand),pclXbox->GetY(frc::XboxController::kLeftHand)*-1,pclXbox->GetX(frc::XboxController::kRightHand),0.0);
+
 		//Adding a new pneumatic function for potential climber or gear placement
 		//Work in Progress
 		pclSolenoid->Set(pclXbox2->GetXButton() ? frc::DoubleSolenoid::Value::kForward : frc::DoubleSolenoid::Value::kReverse);
 
-	}
+	} // end TeleopPeriodic()
+
+
+// ----------------------------------------------------------------------------
+// Test Mode
+// ----------------------------------------------------------------------------
 
 	void TestPeriodic() {}
+
+
+// ----------------------------------------------------------------------------
 
 private:
 	frc::LiveWindow& m_lw = *LiveWindow::GetInstance();
