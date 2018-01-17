@@ -1,4 +1,4 @@
-![logo](assets/logo.jpg)
+![logo](http://team2556.com/Content/images/home/2.jpg)
 
 # Robotics Roaches (#2556)
 _FIRST&reg; Robotics Competition_ team from Niceville High School, located in Niceville, Florida.
