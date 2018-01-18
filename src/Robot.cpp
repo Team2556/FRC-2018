@@ -17,6 +17,8 @@
 #include "ctre/Phoenix.h"
 #include "MotorSafetyHelper.h"
 #include <DoubleSolenoid.h>
+#include "timer.h"
+#include "DigitalInput.h"
 class Robot: public frc::IterativeRobot {
 	std::unique_ptr<Talon> _LEDs;
 
@@ -45,6 +47,8 @@ class Robot: public frc::IterativeRobot {
 	DoubleSolenoid *	pclSolenoid;
 
 	cs::UsbCamera				UsbCamera1;
+
+	DigitalInput *limitswitch;
 
 
 // ----------------------------------------------------------------------------
@@ -84,6 +88,8 @@ public:
 		//Setting up Pneumatic
 		pclSolenoid = new DoubleSolenoid(PCM,0,1);
 
+		limitswitch= new DigitalInput(0);
+
 		} // end Robot class constructor
 
 
@@ -118,17 +124,36 @@ public:
 	 * well.
 	 */
 	void AutonomousInit() override {
+				std::string gameData;
+				gameData = frc::DriverStation::GetInstance().GetGameSpecificMessage();
+				if(gameData[0] == 'L'){
+					SmartDashboard::PutString("DB/String 0", "Left");
+				}
+				else if(gameData[0]=='R'){
+					SmartDashboard::PutString("DB/String 0", "Right");
+				}
+				else{
+					SmartDashboard::PutString("DB/String 0", "UnKnown");
+				}
 
-		m_autoSelected = m_chooser.GetSelected();
-		// m_autoSelected = SmartDashboard::GetString(
-		// 		"Auto Selector", kAutoNameDefault);
-		std::cout << "Auto selected: " << m_autoSelected << std::endl;
-
-		if (m_autoSelected == kAutoNameCustom) {
-			// Custom Auto goes here
-		} else {
-			// Default Auto goes here
-		}
+				if(gameData[1] == 'L'){
+							SmartDashboard::PutString("DB/String 1", "Left");
+						}
+				else if(gameData[1]=='R'){
+							SmartDashboard::PutString("DB/String 1", "Right");
+						}
+				else{
+							SmartDashboard::PutString("DB/String 1", "UnKnown");
+						}
+				if(gameData[2] == 'L'){
+							SmartDashboard::PutString("DB/String 2", "Left");
+						}
+				else if(gameData[2]=='R'){
+							SmartDashboard::PutString("DB/String 2", "Right");
+						}
+				else{
+							SmartDashboard::PutString("DB/String 2", "UnKnown");
+						}
 	} // end AutonomousInit()
 
 
@@ -136,6 +161,7 @@ public:
 // ----------------------------------------------------------------------------
 
 	void AutonomousPeriodic() {
+#if 0
 		std::string sliderString ;
 		double dSliderDrive;
 		dSliderDrive = (SmartDashboard::GetNumber("DB/Slider 0", 0.0)-2.5)/2.5;
@@ -150,6 +176,26 @@ public:
 		sliderString = std::to_string(dSliderForRev);
 		SmartDashboard::PutString("DB/String 1", sliderString2.c_str());
 		m_robotDrive->DriveCartesian(0, dSliderForRev,0,0 );
+#endif
+					std::string timerShow ;
+					double timer = DriverStation::GetInstance().GetMatchTime();
+					timerShow = std::to_string(timer);
+					SmartDashboard::PutString("DB/String 4", timerShow.c_str());
+					double atimer = DriverStation::GetInstance().GetMatchTime();
+						if(atimer >= 12.4){
+							m_robotDrive->DriveCartesian(-1,1,0,0);
+						}
+						else if((atimer >= 12.2) && (atimer > 0)){
+							m_robotDrive->DriveCartesian(0,1,0,0);
+						}
+
+						else if((atimer >= 11.8)&&(atimer > 0)){
+							m_robotDrive->DriveCartesian(1,0,0,0);
+						}
+						else if((atimer >= 11)&&(atimer > 0)){
+							m_robotDrive->DriveCartesian(0,0,0,0);
+						}
+
 
 	} // end AutonomousPeriodic()
 
@@ -174,7 +220,14 @@ public:
 
 		//Adding a new pneumatic function for potential climber or gear placement
 		//Work in Progress
-		pclSolenoid->Set(pclXbox2->GetXButton() ? frc::DoubleSolenoid::Value::kForward : frc::DoubleSolenoid::Value::kReverse);
+		pclSolenoid->Set(pclXbox2->GetXButton() ? frc::DoubleSolenoid::Value::kForward : frc::DoubleSolenoid::Value::kOff);
+
+
+				if(limitswitch->Get()== 0){
+					pclSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+				}
+
+				pclSolenoid->Set(pclXbox2->GetAButton() ? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
 
 	} // end TeleopPeriodic()
 
