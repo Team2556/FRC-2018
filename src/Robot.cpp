@@ -219,11 +219,8 @@ public:
 		m_robotDrive->DriveCartesian(pclXbox->GetX(frc::XboxController::kLeftHand),pclXbox->GetY(frc::XboxController::kLeftHand)*-1,pclXbox->GetX(frc::XboxController::kRightHand),0.0);
 
 		//Adding a new pneumatic function for potential climber or gear placement
-		//Work in Progress
-		pclSolenoid->Set(pclXbox2->GetXButton() ? frc::DoubleSolenoid::Value::kForward : frc::DoubleSolenoid::Value::kOff);
-
-
-				if(limitswitch->Get()== 0){
+		//limit switch and manual override
+		if(limitswitch->Get()== 0 || pclXbox2->GetXButton()){
 					pclSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 				}
 
