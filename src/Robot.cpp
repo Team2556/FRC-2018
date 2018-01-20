@@ -38,8 +38,8 @@ class Robot: public frc::IterativeRobot {
 	//set up motor controllers
 	//If you need to set up TalonSrx's in the future copy one of these and chanfe the device number found in the ()
 	WPI_TalonSRX *lf = new WPI_TalonSRX(1); /*left front */
-	WPI_TalonSRX *lr = new WPI_TalonSRX(2);/*left rear */
-	WPI_TalonSRX *rf = new WPI_TalonSRX(3); /*right front */
+	WPI_TalonSRX *lr = new WPI_TalonSRX(3);/*left rear */
+	WPI_TalonSRX *rf = new WPI_TalonSRX(2); /*right front */
 	WPI_TalonSRX *rr = new WPI_TalonSRX(4); /*right rear */
 	WPI_TalonSRX *am = new WPI_TalonSRX(5); /*arm motor*/
 	WPI_TalonSRX *cm = new WPI_TalonSRX(6); /*climbing motor*/
@@ -248,9 +248,12 @@ public:
 				climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kForward: frc::DoubleSolenoid::Value::kOff);
 
 				cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
-
-				am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
-				am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
+				if(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)> 0.1){
+					am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
+				}
+				else if(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)> 0.1){
+					am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
+				}
 	} // end TeleopPeriodic()
 
 
