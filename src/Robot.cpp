@@ -23,7 +23,7 @@ class Robot: public frc::IterativeRobot {
 	std::unique_ptr<Talon> _LEDs;
 
 	const int PDP = 1;
-	const int PCM = 4;
+	const int PCM = 0;
 
 	//Set up Drive trains
 	MecanumDrive *m_robotDrive;
@@ -37,18 +37,23 @@ class Robot: public frc::IterativeRobot {
 
 	//set up motor controllers
 	//If you need to set up TalonSrx's in the future copy one of these and chanfe the device number found in the ()
-	WPI_TalonSRX *lf = new WPI_TalonSRX(0); /*left front */
-	WPI_TalonSRX *lr = new WPI_TalonSRX(1);/*left rear */
-	WPI_TalonSRX *rf = new WPI_TalonSRX(2); /*right front */
-	WPI_TalonSRX *rr = new WPI_TalonSRX(3); /*right rear */
+	WPI_TalonSRX *lf = new WPI_TalonSRX(1); /*left front */
+	WPI_TalonSRX *lr = new WPI_TalonSRX(2);/*left rear */
+	WPI_TalonSRX *rf = new WPI_TalonSRX(3); /*right front */
+	WPI_TalonSRX *rr = new WPI_TalonSRX(4); /*right rear */
+	WPI_TalonSRX *am = new WPI_TalonSRX(5); /*arm motor*/
+	WPI_TalonSRX *cm = new WPI_TalonSRX(6); /*climbing motor*/
 
 	//Setting up solenoid for potential climbing or cube placement on the robot
 	//Should be really easy to change for POWER UP robot in the future if something changes
-	DoubleSolenoid *	pclSolenoid;
+	DoubleSolenoid *	armSolenoid;
+	DoubleSolenoid *	climbSolenoid;
 
 	cs::UsbCamera				UsbCamera1;
 
 	DigitalInput *limitswitch;
+
+	AnalogGyro* gyro;
 
 
 // ----------------------------------------------------------------------------
@@ -66,6 +71,8 @@ public:
 		lr->Set(ControlMode::PercentOutput, 0);
 		rf->Set(ControlMode::PercentOutput, 0);
 		rr->Set(ControlMode::PercentOutput, 0);
+		am->Set(ControlMode::PercentOutput, 0);
+		cm->Set(ControlMode::PercentOutput, 0);
 
 		//Initial the robot drive
 		//Sets the different motor controllers for the drivebase
@@ -86,9 +93,12 @@ public:
 		pclJoystick = new Joystick(0);
 
 		//Setting up Pneumatic
-		pclSolenoid = new DoubleSolenoid(PCM,0,1);
+		climbSolenoid = new DoubleSolenoid(PCM,0,1);
+		armSolenoid = new DoubleSolenoid(PCM,0,1);
 
 		limitswitch= new DigitalInput(0);
+
+		gyro = new AnalogGyro(1);
 
 		} // end Robot class constructor
 
@@ -102,6 +112,7 @@ public:
 		UsbCamera1 = CameraServer::GetInstance()->StartAutomaticCapture();
 		UsbCamera1.SetResolution(160, 120);
 		UsbCamera1.SetFPS(5);
+		climbSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 	} // end RobotInit()
 
 
@@ -177,13 +188,15 @@ public:
 		SmartDashboard::PutString("DB/String 1", sliderString2.c_str());
 		m_robotDrive->DriveCartesian(0, dSliderForRev,0,0 );
 #endif
+#if 0
+		float angle = gyro.GetAngle();
 					std::string timerShow ;
 					double timer = DriverStation::GetInstance().GetMatchTime();
 					timerShow = std::to_string(timer);
 					SmartDashboard::PutString("DB/String 4", timerShow.c_str());
 					double atimer = DriverStation::GetInstance().GetMatchTime();
 						if(atimer >= 12.4){
-							m_robotDrive->DriveCartesian(-1,1,0,0);
+							m_robotDrive->DriveCartesian(0,0,0,-angle * kP);
 						}
 						else if((atimer >= 12.2) && (atimer > 0)){
 							m_robotDrive->DriveCartesian(0,1,0,0);
@@ -196,6 +209,10 @@ public:
 							m_robotDrive->DriveCartesian(0,0,0,0);
 						}
 
+#endif
+						static const float kP = 0.03;
+						float angle = gyro->GetAngle();
+						m_robotDrive->DriveCartesian(-1,0,0,-angle *kP);
 
 	} // end AutonomousPeriodic()
 
@@ -216,16 +233,24 @@ public:
 		//The different values can be set or set with controllers depending on when in the match it is
 		//The Different joysticks on the controller can be defined like it is below, something to consider though, the way the WPIlib says to set up a drivetrain like this you ddo GetY the GetX
 		//But this is backward. And the foward and backward is inversed so multiplying the joystick value by -1 should fix all errors with this issue*/
+
 		m_robotDrive->DriveCartesian(pclXbox->GetX(frc::XboxController::kLeftHand),pclXbox->GetY(frc::XboxController::kLeftHand)*-1,pclXbox->GetX(frc::XboxController::kRightHand),0.0);
 
 		//Adding a new pneumatic function for potential climber or gear placement
 		//limit switch and manual override
 		if(limitswitch->Get()== 0 || pclXbox2->GetXButton()){
-					pclSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+					armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 				}
 
-				pclSolenoid->Set(pclXbox2->GetAButton() ? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
+				armSolenoid->Set(pclXbox2->GetAButton() ? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
 
+				climbSolenoid->Set(pclXbox2->GetBButton()? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
+				climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kForward: frc::DoubleSolenoid::Value::kOff);
+
+				cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
+
+				am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
+				am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
 	} // end TeleopPeriodic()
 
 
