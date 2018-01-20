@@ -19,6 +19,10 @@
 #include <DoubleSolenoid.h>
 #include "timer.h"
 #include "DigitalInput.h"
+
+#include "RobotMap.h"
+
+
 class Robot: public frc::IterativeRobot {
 	std::unique_ptr<Talon> _LEDs;
 
@@ -32,26 +36,26 @@ class Robot: public frc::IterativeRobot {
 	//Using the two Xbox controllers for competition the Joystick is for potential change in the future todays date is 1/12/18
 	XboxController* 	pclXbox;
 	XboxController* 	pclXbox2;
-	Joystick *	pclJoystick;
+	Joystick *			pclJoystick;
 
 
 	//set up motor controllers
 	//If you need to set up TalonSrx's in the future copy one of these and chanfe the device number found in the ()
-	WPI_TalonSRX *lf = new WPI_TalonSRX(1); /*left front */
-	WPI_TalonSRX *lr = new WPI_TalonSRX(3);/*left rear */
-	WPI_TalonSRX *rf = new WPI_TalonSRX(2); /*right front */
-	WPI_TalonSRX *rr = new WPI_TalonSRX(4); /*right rear */
-	WPI_TalonSRX *am = new WPI_TalonSRX(5); /*arm motor*/
-	WPI_TalonSRX *cm = new WPI_TalonSRX(6); /*climbing motor*/
+	WPI_TalonSRX *lf = new WPI_TalonSRX(CAN_TALON_LEFT_FRONT); /*left front */
+	WPI_TalonSRX *lr = new WPI_TalonSRX(CAN_TALON_LEFT_REAR);/*left rear */
+	WPI_TalonSRX *rf = new WPI_TalonSRX(CAN_TALON_RIGHT_FRONT); /*right front */
+	WPI_TalonSRX *rr = new WPI_TalonSRX(CAN_TALON_RIGHT_REAR); /*right rear */
+	WPI_TalonSRX *am = new WPI_TalonSRX(CAN_TALON_ARM_MOTOR); /*arm motor*/
+	WPI_TalonSRX *cm = new WPI_TalonSRX(CAN_TALON_CLIMB_MOTOR); /*climbing motor*/
 
 	//Setting up solenoid for potential climbing or cube placement on the robot
 	//Should be really easy to change for POWER UP robot in the future if something changes
 	DoubleSolenoid *	armSolenoid;
 	DoubleSolenoid *	climbSolenoid;
 
-	cs::UsbCamera				UsbCamera1;
+	cs::UsbCamera		UsbCamera1;
 
-	DigitalInput *limitswitch;
+	DigitalInput *		limitswitch;
 
 	AnalogGyro* gyro;
 
@@ -93,10 +97,10 @@ public:
 		pclJoystick = new Joystick(0);
 
 		//Setting up Pneumatic
-		climbSolenoid = new DoubleSolenoid(PCM,0,1);
-		armSolenoid = new DoubleSolenoid(PCM,0,1);
+		climbSolenoid = new DoubleSolenoid(CAN_PCM, PCM_CHAN_CLIMB_UP, PCM_CHAN_CLIMB_DOWN);
+		armSolenoid = new DoubleSolenoid(CAN_PCM, PCM_CHAN_ARM_UP, PCM_CHAN_ARM_UP);
 
-		limitswitch= new DigitalInput(0);
+		limitswitch= new DigitalInput(DIO_LIMIT_SW);
 
 		gyro = new AnalogGyro(1);
 
