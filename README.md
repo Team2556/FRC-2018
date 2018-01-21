@@ -8,11 +8,11 @@ Check out our website at [https://www.team2556.com](https://www.team2556.com).
 More to come soon
 
 ### Contributors
- * Dylan Money - [*money-dylan*](https://github.com/money-dylan)
- * Logan Thursby - [*LoganThursby*](https://github.com/LoganThursby)
- * Noah Bresler - [*Noah*](https://github.com/MrNoahz)
- * Matthew Vandenboom - [*Matthew-VandenBoom*](https://github.com/Matthew-VandenBoom)
- * Sarah
+ * Dylan - [*money-dylan*](https://github.com/money-dylan)
+ * Logan - [*LoganThursby*](https://github.com/LoganThursby)
+ * Noah - [*Noah*](https://github.com/MrNoahz)
+ * Matthew - [*Matthew-VandenBoom*](https://github.com/Matthew-VandenBoom)
+ * Sara
 
 ### Mentors
  * Bob Baggerman - [*bbaggerman*](https://github.com/bbaggerman)
