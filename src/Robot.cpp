@@ -22,22 +22,29 @@
 
 #include "RobotMap.h"
 
+#ifdef NAVX
+#include <AHRS.h>
+#endif
+
+// ============================================================================
+// Main iterative robot class
+// ============================================================================
 
 class Robot: public frc::IterativeRobot {
 	std::unique_ptr<Talon> _LEDs;
-
-	const int PDP = 1;
-	const int PCM = 0;
 
 	//Set up Drive trains
 	MecanumDrive *m_robotDrive;
 
 	//set up controllers
 	//Using the two Xbox controllers for competition the Joystick is for potential change in the future todays date is 1/12/18
+#ifdef XBOX
 	XboxController* 	pclXbox;
 	XboxController* 	pclXbox2;
+#endif
+#ifdef JOYSTICK
 	Joystick *			pclJoystick;
-
+#endif
 
 	//set up motor controllers
 	//If you need to set up TalonSrx's in the future copy one of these and chanfe the device number found in the ()
@@ -57,7 +64,13 @@ class Robot: public frc::IterativeRobot {
 
 	DigitalInput *		limitswitch;
 
-	AnalogGyro* gyro;
+	float				fGyroCommandAngle; 	// Gryo angle to seek
+
+#ifdef NAVX
+	AHRS *  			pNavX;
+#endif
+
+//	AnalogGyro* gyro;
 
 
 // ----------------------------------------------------------------------------
@@ -90,11 +103,15 @@ public:
 
 		//Initial the joy-stick and inputs as well as the Xbox controllers
 		//The values found in the () are for the USB ports that you can change in the Driver Station
+#ifdef XBOX
 		pclXbox  = new XboxController(0);
 		pclXbox2 = new XboxController(1);
+#endif
 
 		//The Joystick is for the potential of the future and not for the robot  as of right now 1/12/18
+#ifdef JOYSTICK
 		pclJoystick = new Joystick(0);
+#endif
 
 		//Setting up Pneumatic
 		climbSolenoid = new DoubleSolenoid(CAN_PCM, PCM_CHAN_CLIMB_UP, PCM_CHAN_CLIMB_DOWN);
@@ -102,7 +119,12 @@ public:
 
 		limitswitch= new DigitalInput(DIO_LIMIT_SW);
 
-		gyro = new AnalogGyro(1);
+#ifdef NAVX
+		// Make the NavX control object
+		pNavX = new AHRS(SPI::Port::kMXP);
+#endif
+
+//		gyro = new AnalogGyro(1);
 
 		} // end Robot class constructor
 
@@ -117,6 +139,10 @@ public:
 		UsbCamera1.SetResolution(160, 120);
 		UsbCamera1.SetFPS(5);
 		climbSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+
+#ifdef NAVX
+		fGyroCommandAngle = pNavX->GetYaw();
+#endif
 	} // end RobotInit()
 
 
@@ -169,6 +195,10 @@ public:
 				else{
 							SmartDashboard::PutString("DB/String 2", "UnKnown");
 						}
+
+#ifdef NAVX
+		fGyroCommandAngle = pNavX->GetYaw();
+#endif
 	} // end AutonomousInit()
 
 
@@ -214,9 +244,23 @@ public:
 						}
 
 #endif
-						static const float kP = 0.03;
-						float angle = gyro->GetAngle();
-						m_robotDrive->DriveCartesian(-1,0,0,-angle *kP);
+
+// I am not so sure about the correctness this gyro code. Try the NAVX code instead.
+//						static const float kP = 0.03;
+//						float angle = gyro->GetAngle();
+//						m_robotDrive->DriveCartesian(-1,0,0,-angle *kP);
+#ifdef NAVX
+		float			fCurrAngle;
+		std::string		sMsg;
+
+		fCurrAngle = pNavX->GetYaw();
+		sMsg = "Yaw - " + std::to_string(fCurrAngle);
+		SmartDashboard::PutString("DB/String 6", sMsg.c_str());
+		m_robotDrive->DriveCartesian(0.0, 0.0, (fCurrAngle - fGyroCommandAngle) * -0.05, 0.0);
+#else
+		m_robotDrive->DriveCartesian(0.0, 0.0, 0.0, 0.0);
+#endif
+
 
 	} // end AutonomousPeriodic()
 
@@ -225,7 +269,12 @@ public:
 // Teleop Mode
 // ----------------------------------------------------------------------------
 
-	void TeleopInit() {}
+	void TeleopInit() {
+
+#ifdef NAVX
+		fGyroCommandAngle = pNavX->GetYaw();
+#endif
+	}
 
 
 // ----------------------------------------------------------------------------
@@ -238,7 +287,33 @@ public:
 		//The Different joysticks on the controller can be defined like it is below, something to consider though, the way the WPIlib says to set up a drivetrain like this you ddo GetY the GetX
 		//But this is backward. And the foward and backward is inversed so multiplying the joystick value by -1 should fix all errors with this issue*/
 
-		m_robotDrive->DriveCartesian(pclXbox->GetX(frc::XboxController::kLeftHand),pclXbox->GetY(frc::XboxController::kLeftHand)*-1,pclXbox->GetX(frc::XboxController::kRightHand),0.0);
+		float 			fXStick = 0.0;
+		float 			fYStick = 0.0;
+		float			fRotate = 0.0;
+
+		// Get drive values from the joystick or the XBox controller
+#ifdef JOYSTICK
+		fXStick = pclJoystick->GetX();
+		fYStick = pclJoystick->GetY() * -1.0;
+#endif
+#ifdef XBOX
+		fXStick = pclXbox->GetX(frc::XboxController::kLeftHand);
+		fYStick = pclXbox->GetY(frc::XboxController::kLeftHand) * -1.0;
+		fRotate = pclXbox->GetX(frc::XboxController::kRightHand);
+#endif
+
+#ifdef NAVX
+		float			fCurrAngle;
+		std::string		sMsg;
+
+		fCurrAngle = pNavX->GetYaw();
+		sMsg = "Yaw - " + std::to_string(fCurrAngle);
+		SmartDashboard::PutString("DB/String 6", sMsg.c_str());
+		m_robotDrive->DriveCartesian(fXStick, fYStick, (fCurrAngle - fGyroCommandAngle) * -0.05, 0.0);
+	#else
+		m_robotDrive->DriveCartesian(fXStick, fYStick, fRotate, 0.0);
+	#endif
+
 
 		//Adding a new pneumatic function for potential climber or gear placement
 		//limit switch and manual override

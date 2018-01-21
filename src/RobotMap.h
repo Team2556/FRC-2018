@@ -14,9 +14,14 @@
 // -------------------------------
 
 // NavX
-#define NAVX
+//#define NAVX
 //#define JOYSTICK
 #define XBOX
+
+// Check to make sure JOYSTICK and XBOX aren't both enabled
+#if defined(JOYSTICK) and defined(XBOX)
+#pragma message "WARNING! Both joystick and XBox controllers are enabled!"
+#endif
 
 // CAN bus addresses
 // -----------------
@@ -31,7 +36,7 @@
 
 // PCM Channels
 #define PCM_CHAN_CLIMB_UP		0
-#define PCM_CHAN_ARM_DOWN		1
+#define PCM_CHAN_CLIMB_DOWN		1
 #define PCM_CHAN_ARM_UP			3
 #define PCM_CHAN_ARM_DOWN		4
 
