@@ -19,6 +19,7 @@
 #include <DoubleSolenoid.h>
 #include "timer.h"
 #include "DigitalInput.h"
+#include "math.h"
 
 #include "RobotMap.h"
 
@@ -213,8 +214,6 @@ public:
 		sliderString = std::to_string(dSliderDrive);
 		SmartDashboard::PutString("DB/String 0", sliderString.c_str());
 		m_robotDrive->DriveCartesian(dSliderDrive, 0,0,0 );
-
-
 		std::string sliderString2 ;
 		double dSliderForRev;
 		dSliderForRev = (SmartDashboard::GetNumber("DB/Slider 1", 0.0)-2.5)/2.5;
@@ -235,14 +234,12 @@ public:
 						else if((atimer >= 12.2) && (atimer > 0)){
 							m_robotDrive->DriveCartesian(0,1,0,0);
 						}
-
 						else if((atimer >= 11.8)&&(atimer > 0)){
 							m_robotDrive->DriveCartesian(1,0,0,0);
 						}
 						else if((atimer >= 11)&&(atimer > 0)){
 							m_robotDrive->DriveCartesian(0,0,0,0);
 						}
-
 #endif
 
 // I am not so sure about the correctness this gyro code. Try the NAVX code instead.
@@ -308,8 +305,24 @@ public:
 
 		fCurrAngle = pNavX->GetYaw();
 		sMsg = "Yaw - " + std::to_string(fCurrAngle);
-		SmartDashboard::PutString("DB/String 6", sMsg.c_str());
-		m_robotDrive->DriveCartesian(fXStick, fYStick, (fCurrAngle - fGyroCommandAngle) * -0.05, 0.0);
+		SmartDashboard::PutString("DB/String 0", sMsg.c_str());
+		m_robotDrive->DriveCartesian(fXStick, fYStick, fRotate/*(fCurrAngle - fGyroCommandAngle) * -0.05*/, 0.0);
+
+
+
+		if(pclXbox->GetAButton())
+		{
+			while((fabs(fCurrAngle)>5))
+			{
+				m_robotDrive->DriveCartesian(0.0,0.0,-.5,0.0);
+				fCurrAngle = pNavX->GetYaw();
+			}
+			m_robotDrive->DriveCartesian(0.0,0.0,0.0,0.0);
+		}
+
+
+
+
 	#else
 		m_robotDrive->DriveCartesian(fXStick, fYStick, fRotate, 0.0);
 	#endif
