@@ -14,7 +14,7 @@
 // -------------------------------
 
 // NavX
-//#define NAVX
+#define NAVX
 //#define JOYSTICK
 #define XBOX
 
