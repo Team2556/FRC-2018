@@ -27,6 +27,11 @@
 #include <AHRS.h>
 #endif
 
+#ifdef ADXRS_GYRO
+#include <ADXRS450_Gyro.h>
+#endif
+
+
 // ============================================================================
 // Main iterative robot class
 // ============================================================================
@@ -69,6 +74,10 @@ class Robot: public frc::IterativeRobot {
 
 #ifdef NAVX
 	AHRS *  			pNavX;
+#endif
+
+#ifdef ADXRS_GYRO
+	ADXRS450_Gyro *		pADXRS;
 #endif
 
 //	AnalogGyro* gyro;
@@ -120,12 +129,15 @@ public:
 
 		limitswitch= new DigitalInput(DIO_LIMIT_SW);
 
+		// Setup the gyro
 #ifdef NAVX
 		// Make the NavX control object
 		pNavX = new AHRS(SPI::Port::kMXP);
 #endif
 
-//		gyro = new AnalogGyro(1);
+#ifdef ADXRS_GYRO
+		pADXRS = new ADXRS450_Gyro();
+#endif
 
 		} // end Robot class constructor
 
@@ -141,9 +153,14 @@ public:
 		UsbCamera1.SetFPS(5);
 		climbSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 
+		// Get the initial starting angle
 #ifdef NAVX
 		fGyroCommandAngle = pNavX->GetYaw();
 #endif
+#ifdef ADXRS_GYRO
+		fGyroCommandAngle = pADXRS->GetAngle();
+#endif
+
 	} // end RobotInit()
 
 
@@ -200,6 +217,10 @@ public:
 #ifdef NAVX
 		fGyroCommandAngle = pNavX->GetYaw();
 #endif
+#ifdef ADXRS_GYRO
+		fGyroCommandAngle = pADXRS->GetAngle();
+#endif
+
 	} // end AutonomousInit()
 
 
@@ -242,22 +263,27 @@ public:
 						}
 #endif
 
-// I am not so sure about the correctness this gyro code. Try the NAVX code instead.
-//						static const float kP = 0.03;
-//						float angle = gyro->GetAngle();
-//						m_robotDrive->DriveCartesian(-1,0,0,-angle *kP);
-#ifdef NAVX
+#if defined(NAVX) or defined(ADXRS_GYRO)
 		float			fCurrAngle;
 		std::string		sMsg;
 
+#if defined(NAVX)
 		fCurrAngle = pNavX->GetYaw();
-		sMsg = "Yaw - " + std::to_string(fCurrAngle);
+#elif defined(ADXRS_GYRO)
+		fCurrAngle = pADXRS->GetAngle();
+#else
+		fCurrAngle = fGyroCommandAngle;
+#endif
+		sMsg = "Yaw = " + std::to_string(fCurrAngle);
 		SmartDashboard::PutString("DB/String 6", sMsg.c_str());
 		m_robotDrive->DriveCartesian(0.0, 0.0, (fCurrAngle - fGyroCommandAngle) * -0.05, 0.0);
 #else
 		m_robotDrive->DriveCartesian(0.0, 0.0, 0.0, 0.0);
 #endif
 
+#ifdef ADXRS_GYRO
+		fGyroCommandAngle = pADXRS->GetAngle();
+#endif
 
 	} // end AutonomousPeriodic()
 
@@ -270,6 +296,9 @@ public:
 
 #ifdef NAVX
 		fGyroCommandAngle = pNavX->GetYaw();
+#endif
+#ifdef ADXRS_GYRO
+		fGyroCommandAngle = pADXRS->GetAngle();
 #endif
 	}
 
@@ -299,34 +328,28 @@ public:
 		fRotate = pclXbox->GetX(frc::XboxController::kRightHand);
 #endif
 
-#ifdef NAVX
+		// If there is a gyro defined then use it
+#if defined(NAVX) or defined(ADXRS_GYRO)
 		float			fCurrAngle;
 		std::string		sMsg;
 
+		// Get current angle from the NavX or ADXRS
+#if defined(NAVX)
 		fCurrAngle = pNavX->GetYaw();
-		sMsg = "Yaw - " + std::to_string(fCurrAngle);
-		SmartDashboard::PutString("DB/String 0", sMsg.c_str());
-		m_robotDrive->DriveCartesian(fXStick, fYStick, fRotate/*(fCurrAngle - fGyroCommandAngle) * -0.05*/, 0.0);
+#elif defined(ADXRS_GYRO)
+		fCurrAngle = pADXRS->GetAngle();
+#else
+		fCurrAngle = fGyroCommandAngle;
+#endif
 
+		// Calculate a rotation rate from robot angle error
+		sMsg = "Yaw = " + std::to_string(fCurrAngle);
+		SmartDashboard::PutString("DB/String 6", sMsg.c_str());
+		fRotate = (fCurrAngle - fGyroCommandAngle) * -0.05;
+#endif
 
-
-		if(pclXbox->GetAButton())
-		{
-			while((fabs(fCurrAngle)>5))
-			{
-				m_robotDrive->DriveCartesian(0.0,0.0,-.5,0.0);
-				fCurrAngle = pNavX->GetYaw();
-			}
-			m_robotDrive->DriveCartesian(0.0,0.0,0.0,0.0);
-		}
-
-
-
-
-	#else
+		// Send drive values to the drive train
 		m_robotDrive->DriveCartesian(fXStick, fYStick, fRotate, 0.0);
-	#endif
-
 
 		//Adding a new pneumatic function for potential climber or gear placement
 		//limit switch and manual override

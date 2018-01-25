@@ -13,8 +13,11 @@
 // Turn on or off various features
 // -------------------------------
 
-// NavX
-#define NAVX
+// Gyros
+//#define NAVX
+#define ADXRS_GYRO
+
+// Controllers
 //#define JOYSTICK
 #define XBOX
 
