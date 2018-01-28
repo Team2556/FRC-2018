@@ -15,7 +15,7 @@
 
 // Gyros
 //#define NAVX
-#define ADXRS_GYRO
+//#define ADXRS_GYRO
 
 // Controllers
 //#define JOYSTICK
@@ -34,6 +34,7 @@
 #define CAN_TALON_LEFT_REAR		3
 #define CAN_TALON_RIGHT_REAR	4
 #define CAN_TALON_ARM_MOTOR		5
+#define CAN_TALON_IN_OUT_MOTOR	7
 #define CAN_TALON_CLIMB_MOTOR	6
 #define CAN_PCM					11
 
@@ -45,6 +46,7 @@
 
 // Digital I/O Channels
 #define DIO_LIMIT_SW			0
+#define DIO_LIMIT_ARM			1
 
 
 #endif /* SRC_ROBOTMAP_H_ */

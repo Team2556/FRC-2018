@@ -42,6 +42,8 @@ class Robot: public frc::IterativeRobot {
 	//Set up Drive trains
 	MecanumDrive *m_robotDrive;
 
+
+
 	//set up controllers
 	//Using the two Xbox controllers for competition the Joystick is for potential change in the future todays date is 1/12/18
 #ifdef XBOX
@@ -59,7 +61,8 @@ class Robot: public frc::IterativeRobot {
 	WPI_TalonSRX *rf = new WPI_TalonSRX(CAN_TALON_RIGHT_FRONT); /*right front */
 	WPI_TalonSRX *rr = new WPI_TalonSRX(CAN_TALON_RIGHT_REAR); /*right rear */
 	WPI_TalonSRX *am = new WPI_TalonSRX(CAN_TALON_ARM_MOTOR); /*arm motor*/
-	WPI_TalonSRX *cm = new WPI_TalonSRX(CAN_TALON_CLIMB_MOTOR); /*climbing motor*/
+	WPI_TalonSRX *iom = new WPI_TalonSRX(CAN_TALON_IN_OUT_MOTOR); /*arm motor*/
+	//WPI_TalonSRX *cm = new WPI_TalonSRX(CAN_TALON_CLIMB_MOTOR); /*climbing motor*/
 
 	//Setting up solenoid for potential climbing or cube placement on the robot
 	//Should be really easy to change for POWER UP robot in the future if something changes
@@ -69,8 +72,11 @@ class Robot: public frc::IterativeRobot {
 	cs::UsbCamera		UsbCamera1;
 
 	DigitalInput *		limitswitch;
+	DigitalInput *		limitArm;
 
 	float				fGyroCommandAngle; 	// Gryo angle to seek
+
+	AnalogInput * AnalogIn;
 
 #ifdef NAVX
 	AHRS *  			pNavX;
@@ -99,7 +105,8 @@ public:
 		rf->Set(ControlMode::PercentOutput, 0);
 		rr->Set(ControlMode::PercentOutput, 0);
 		am->Set(ControlMode::PercentOutput, 0);
-		cm->Set(ControlMode::PercentOutput, 0);
+		iom->Set(ControlMode::PercentOutput, 0);
+		//cm->Set(ControlMode::PercentOutput, 0);
 
 		//Initial the robot drive
 		//Sets the different motor controllers for the drivebase
@@ -128,6 +135,9 @@ public:
 		armSolenoid = new DoubleSolenoid(CAN_PCM, PCM_CHAN_ARM_UP, PCM_CHAN_ARM_UP);
 
 		limitswitch= new DigitalInput(DIO_LIMIT_SW);
+		limitswitch= new DigitalInput(DIO_LIMIT_ARM);
+
+		AnalogIn = new AnalogInput(0);
 
 		// Setup the gyro
 #ifdef NAVX
@@ -285,6 +295,10 @@ public:
 		fGyroCommandAngle = pADXRS->GetAngle();
 #endif
 
+		std::string		analog;
+		int analogG = AnalogIn->PIDGet();
+		analog = std::to_string(analogG);
+		SmartDashboard::PutString("DB/String 6", analog.c_str());
 	} // end AutonomousPeriodic()
 
 
@@ -357,17 +371,23 @@ public:
 					armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 				}
 
+				iom->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
+
 				armSolenoid->Set(pclXbox2->GetAButton() ? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
 
 				climbSolenoid->Set(pclXbox2->GetBButton()? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
 				climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kForward: frc::DoubleSolenoid::Value::kOff);
 
-				cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
+				//cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
 				if(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)> 0.1){
-					am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
+					am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)*-1);
 				}
 				else if(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)> 0.1){
-					am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
+					am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand));
+				}
+				else
+				{
+					am->Set(0);
 				}
 	} // end TeleopPeriodic()
 
