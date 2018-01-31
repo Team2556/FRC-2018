@@ -342,7 +342,7 @@ public:
 #ifdef ADXRS_GYRO
 		fGyroCommandAngle = pADXRS->GetAngle();
 #endif
-
+//Move to teleop periodic after school
 #ifdef ARM_UP_DOWN_USING_POSITION
 		// Hold the current arm position where ever it currently is
 		iCommandedArmPosition = am->GetSelectedSensorPosition(0);
