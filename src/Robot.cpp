@@ -56,13 +56,13 @@ class Robot: public frc::IterativeRobot {
 
 	//set up motor controllers
 	//If you need to set up TalonSrx's in the future copy one of these and chanfe the device number found in the ()
-	WPI_TalonSRX *lf = new WPI_TalonSRX(CAN_TALON_LEFT_FRONT); /*left front */
-	WPI_TalonSRX *lr = new WPI_TalonSRX(CAN_TALON_LEFT_REAR);/*left rear */
-	WPI_TalonSRX *rf = new WPI_TalonSRX(CAN_TALON_RIGHT_FRONT); /*right front */
-	WPI_TalonSRX *rr = new WPI_TalonSRX(CAN_TALON_RIGHT_REAR); /*right rear */
-	WPI_TalonSRX *am = new WPI_TalonSRX(CAN_TALON_ARM_MOTOR); /*arm motor*/
-	WPI_TalonSRX *iom = new WPI_TalonSRX(CAN_TALON_IN_OUT_MOTOR); /*arm motor*/
-	//WPI_TalonSRX *cm = new WPI_TalonSRX(CAN_TALON_CLIMB_MOTOR); /*climbing motor*/
+	WPI_TalonSRX *lf  = new WPI_TalonSRX(CAN_TALON_LEFT_FRONT);   /* left front     */
+	WPI_TalonSRX *lr  = new WPI_TalonSRX(CAN_TALON_LEFT_REAR);    /* left rear      */
+	WPI_TalonSRX *rf  = new WPI_TalonSRX(CAN_TALON_RIGHT_FRONT);  /* right front    */
+	WPI_TalonSRX *rr  = new WPI_TalonSRX(CAN_TALON_RIGHT_REAR);   /* right rear     */
+	WPI_TalonSRX *am  = new WPI_TalonSRX(CAN_TALON_ARM_MOTOR);    /* arm motor      */
+	WPI_TalonSRX *iom = new WPI_TalonSRX(CAN_TALON_IN_OUT_MOTOR); /* arm motor      */
+	//WPI_TalonSRX *cm = new WPI_TalonSRX(CAN_TALON_CLIMB_MOTOR); /* climbing motor */
 
 	//Setting up solenoid for potential climbing or cube placement on the robot
 	//Should be really easy to change for POWER UP robot in the future if something changes
@@ -76,7 +76,9 @@ class Robot: public frc::IterativeRobot {
 
 	float				fGyroCommandAngle; 	// Gryo angle to seek
 
-	AnalogInput * AnalogIn;
+	AnalogInput * 		AnalogIn;
+
+	int					iCommandedArmPosition;	// Position is 0 to 1023
 
 #ifdef NAVX
 	AHRS *  			pNavX;
@@ -104,9 +106,35 @@ public:
 		lr->Set(ControlMode::PercentOutput, 0);
 		rf->Set(ControlMode::PercentOutput, 0);
 		rr->Set(ControlMode::PercentOutput, 0);
-		am->Set(ControlMode::PercentOutput, 0);
-		iom->Set(ControlMode::PercentOutput, 0);
 		//cm->Set(ControlMode::PercentOutput, 0);
+
+		// Setup the Up/Down arm controller
+#ifdef ARM_UP_DOWN_USING_POSITION
+		// Closed loop tracking with analog voltage as the position sensor
+		am->ConfigSelectedFeedbackSensor(FeedbackDevice::Analog, 0, 0); /* PIDLoop=0,timeoutMs=0 */
+		// Dont' ask
+		am->ConfigSetParameter(ParamEnum::eFeedbackNotContinuous, 1, 0x00, 0x00, 0x00);
+		// Tracking algorithm parmater setup. These need to be correct but can be tricky to get right.
+		// These can be adjusted in real time through the roborio web interface.
+		am->SelectProfileSlot(0, 0);	// Set the first of two "profile" slots
+		am->Config_kF(0, 0.0, 0.0);		// Feed forward term, arm may need a little, we will see
+		am->Config_kP(0, 10.0, 0.0);	// Proportional term, play with this first
+		am->Config_kI(0, 0.0, 0.0);		// Integration term, play with this next, about 1/1000 of P term is a good start
+		am->Config_kD(0, 0.0, 0.0);		// Differentiaion term, probably not needed
+//		TalonTest->SetInverted(true);
+//		am->ConfigPeakCurrentLimit(3.0,0);
+//		am->EnableCurrentLimit(true);
+		am->Set(ControlMode::PercentOutput, 0);	// Set speed control for now, and set speed to zero
+#else
+		am->Set(ControlMode::PercentOutput, 0);	// Set good ol' speed control
+#endif
+
+		// Setup the In/Out arm controller
+#ifdef ARM_UP_DOWN_USING_POSITION
+// Use the same setup calls as the arm control above
+#else
+		iom->Set(ControlMode::PercentOutput, 0);
+#endif
 
 		//Initial the robot drive
 		//Sets the different motor controllers for the drivebase
@@ -314,6 +342,16 @@ public:
 #ifdef ADXRS_GYRO
 		fGyroCommandAngle = pADXRS->GetAngle();
 #endif
+
+#ifdef ARM_UP_DOWN_USING_POSITION
+		// Hold the current arm position where ever it currently is
+		iCommandedArmPosition = am->GetSelectedSensorPosition(0);
+		am->Set(ControlMode::Position, iCommandedArmPosition);
+#else
+		// Turn off the arm motor
+		am->Set(ControlMode::PercentOutput, 0);
+#endif
+
 	}
 
 
@@ -378,6 +416,11 @@ public:
 				climbSolenoid->Set(pclXbox2->GetBButton()? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
 				climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kForward: frc::DoubleSolenoid::Value::kOff);
 
+#ifdef ARM_UP_DOWN_USING_POSITION
+				// Put position control code in here. Stay in same position for now. Move arm up and down by
+				// changing value of iCommandedArmPosition in code
+				am->Set(ControlMode::Position, iCommandedArmPosition);
+#else
 				//cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
 				if(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)> 0.1){
 					am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)*-1);
@@ -389,7 +432,9 @@ public:
 				{
 					am->Set(0);
 				}
-	} // end TeleopPeriodic()
+#endif
+
+} // end TeleopPeriodic()
 
 
 // ----------------------------------------------------------------------------

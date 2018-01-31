@@ -26,6 +26,11 @@
 #pragma message "WARNING! Both joystick and XBox controllers are enabled!"
 #endif
 
+// Select arm and in/out speed control mode (the default) or position mode using
+// position sensors.
+#define ARM_UP_DOWN_USING_POSITION
+//#define IN_OUT_USING_POSITION
+
 // CAN bus addresses
 // -----------------
 #define CAN_PDP					0
