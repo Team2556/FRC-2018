@@ -14,7 +14,7 @@
 // -------------------------------
 
 // Gyros
-//#define NAVX
+#define NAVX
 //#define ADXRS_GYRO
 
 // Controllers
