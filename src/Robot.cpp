@@ -115,8 +115,9 @@ public:
     am->Config_kI(0, 0.0, 0.0);		// Integration term, play with this next, about 1/1000 of P term is a good start
     am->Config_kD(0, 0.0, 0.0);		// Differentiaion term, probably not needed
 //		TalonTest->SetInverted(true);
-//		am->ConfigPeakCurrentLimit(3.0,0);
+		am->ConfigPeakCurrentLimit(3.0,0);
 //		am->EnableCurrentLimit(true);
+    	//am->SetInverted(true);
     am->Set(ControlMode::PercentOutput, 0);	// Set speed control for now, and set speed to zero
 #else
     am->Set(ControlMode::PercentOutput, 0);	// Set good ol' speed control
@@ -400,15 +401,18 @@ void TeleopPeriodic() {
 				// changing value of iCommandedArmPosition in code
 				if(positionValue == 0)
 				{
-					am->Set(ControlMode::Position, 0);
+					am->Set(ControlMode::Position, 100);
+					//iom->Set(ControlMode::Position,0);
 				}
 				else if(positionValue == 1)
 				{
-					am->Set(ControlMode::Position, 511.5);
+					am->Set(ControlMode::Position, 500);
+					//iom->Set(ControlMode::Position,500);
 				}
 				else if(positionValue == 2)
 				{
 					am->Set(ControlMode::Position, 800);
+					//iom->Set(ControlMode::Position,800);
 				}
 				SmartDashboard::PutNumber("Positoin Value", positionValue);
 				SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
