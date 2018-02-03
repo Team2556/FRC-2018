@@ -68,6 +68,7 @@ class Robot: public frc::IterativeRobot {
 	DigitalInput *		limitArm;
 
 	float				fGyroCommandAngle; 	// Gryo angle to seek
+	bool 				bPresetTurning;
 
 	AnalogInput * 		AnalogIn;
 
@@ -342,13 +343,6 @@ void TeleopPeriodic() {
     {
         // Calculate a rotation rate from robot angle error
     	fRotate = pNavGyro->GetRotate();
-
-
-
-    	SmartDashboard::PutNumber("Current Angle", pNavGyro->GetYaw() );
-    	SmartDashboard::PutNumber("Command Angle", pNavGyro->fGyroCommandYaw);
-    	SmartDashboard::PutNumber("Rotate Before Correction", pNavGyro->GetYawError() *0.05 );
-    	SmartDashboard::PutNumber("Rotate After Correction", pNavGyro->GetRotate() );
     }
     // Send drive values to the drive train
     m_robotDrive->DriveCartesian(fXStick, fYStick, fRotate, 0.0);
