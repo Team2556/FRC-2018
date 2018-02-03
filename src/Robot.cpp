@@ -55,7 +55,9 @@ class Robot: public frc::IterativeRobot {
 	WPI_TalonSRX *rr  = new WPI_TalonSRX(CAN_TALON_RIGHT_REAR);   /* right rear     */
 	WPI_TalonSRX *am  = new WPI_TalonSRX(CAN_TALON_ARM_MOTOR);    /* arm motor      */
 	WPI_TalonSRX *iom = new WPI_TalonSRX(CAN_TALON_IN_OUT_MOTOR); /* arm motor      */
-	//WPI_TalonSRX *cm = new WPI_TalonSRX(CAN_TALON_CLIMB_MOTOR); /* climbing motor */
+	WPI_TalonSRX *wm = new WPI_TalonSRX(CAN_TALON_WRIST_MOTOR); /* arm motor      */
+	WPI_TalonSRX *cm = new WPI_TalonSRX(CAN_TALON_CLIMB_MOTOR); /* climbing motor */
+	WPI_TalonSRX *cm2 = new WPI_TalonSRX(CAN_TALON_CLIMB_MOTOR2); /* arm motor      */
 
 	//Setting up solenoid for potential climbing or cube placement on the robot
 	//Should be really easy to change for POWER UP robot in the future if something changes
@@ -71,9 +73,11 @@ class Robot: public frc::IterativeRobot {
 	bool 				bPresetTurning;
 
 	AnalogInput * 		AnalogIn;
+	AnalogInput*		AnalogIn2;
 
 	int					iCommandedArmPosition;	// Position is 0 to 1023
 
+	int positionValue = 0;
 	NavGyro	*		pNavGyro;
 
 // ----------------------------------------------------------------------------
@@ -84,14 +88,18 @@ class Robot: public frc::IterativeRobot {
 // -----------
 
 public:
-Robot()
-    {
-    //reset motor safety timeout//
-    lf->Set(ControlMode::PercentOutput, 0);
-    lr->Set(ControlMode::PercentOutput, 0);
-    rf->Set(ControlMode::PercentOutput, 0);
-    rr->Set(ControlMode::PercentOutput, 0);
-    //cm->Set(ControlMode::PercentOutput, 0);
+	Robot()
+		{
+		//reset motor safety timeout//
+		lf->Set(ControlMode::PercentOutput, 0);
+		lr->Set(ControlMode::PercentOutput, 0);
+		rf->Set(ControlMode::PercentOutput, 0);
+		rr->Set(ControlMode::PercentOutput, 0);
+		cm->Set(ControlMode::PercentOutput, 0);
+		wm->Set(ControlMode::PercentOutput, 0);
+		iom->Set(ControlMode::PercentOutput, 0);
+		am->Set(ControlMode::PercentOutput, 0);
+		cm2->Set(ControlMode::PercentOutput, 0);
 
     // Setup the Up/Down arm controller
 #ifdef ARM_UP_DOWN_USING_POSITION
@@ -150,7 +158,8 @@ Robot()
     limitswitch= new DigitalInput(DIO_LIMIT_SW);
     limitswitch= new DigitalInput(DIO_LIMIT_ARM);
 
-    AnalogIn = new AnalogInput(0);
+		AnalogIn = new AnalogInput(0);
+		AnalogIn2 = new AnalogInput(1);
 
     // Setup the gyro
     pNavGyro = new NavGyro();
@@ -289,9 +298,9 @@ void TeleopInit() {
     pNavGyro->SetCommandYawToCurrent();
 //Move to teleop periodic after school
 #ifdef ARM_UP_DOWN_USING_POSITION
-    // Hold the current arm position where ever it currently is
-    iCommandedArmPosition = am->GetSelectedSensorPosition(0);
-    am->Set(ControlMode::Position, iCommandedArmPosition);
+		// Hold the current arm position where ever it currently is
+		iCommandedArmPosition = am->GetSelectedSensorPosition(0);
+		am->Set(ControlMode::Position, 120);
 #else
     // Turn off the arm motor
     am->Set(ControlMode::PercentOutput, 0);
@@ -347,13 +356,19 @@ void TeleopPeriodic() {
     // Send drive values to the drive train
     m_robotDrive->DriveCartesian(fXStick, fYStick, fRotate, 0.0);
 
-    //Adding a new pneumatic function for potential climber or gear placement
-    //limit switch and manual override
-    if(limitswitch->Get()== 0 || pclXbox2->GetXButton()){
-	armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
-    }
+		float PsiValue;
+		double Vout = AnalogIn2->GetVoltage() ;
 
-    iom->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
+		PsiValue = 250*(Vout/2.09384615)-25;
+		SmartDashboard::PutNumber("Voltage", AnalogIn2->GetVoltage());
+		SmartDashboard::PutNumber("Psi", PsiValue);
+
+		//Adding a new pneumatic function for potential climber or gear placement
+		//limit switch and manual override
+		if(limitswitch->Get()== 0 || pclXbox2->GetXButton()){
+					armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+				}
+			iom->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
 
     armSolenoid->Set(pclXbox2->GetAButton()   ? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
 
@@ -361,9 +376,45 @@ void TeleopPeriodic() {
     climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kForward: frc::DoubleSolenoid::Value::kOff);
 
 #ifdef ARM_UP_DOWN_USING_POSITION
-    // Put position control code in here. Stay in same position for now. Move arm up and down by
-    // changing value of iCommandedArmPosition in code
-    am->Set(ControlMode::Position, iCommandedArmPosition);
+				if(pclXbox2->GetBumperPressed(frc::XboxController::kRightHand))
+				{
+					positionValue++;
+				}
+
+				else if(pclXbox2->GetBumperPressed(frc::XboxController::kLeftHand))
+				{
+					positionValue--;
+				}
+
+				else if(positionValue < 0)
+				{
+					positionValue = 0;
+				}
+
+				else if(positionValue > 2)
+				{
+					positionValue = 2;
+				}
+
+				// Put position control code in here. Stay in same position for now. Move arm up and down by
+				// changing value of iCommandedArmPosition in code
+				if(positionValue == 0)
+				{
+					am->Set(ControlMode::Position, 0);
+				}
+				else if(positionValue == 1)
+				{
+					am->Set(ControlMode::Position, 511.5);
+				}
+				else if(positionValue == 2)
+				{
+					am->Set(ControlMode::Position, 800);
+				}
+				SmartDashboard::PutNumber("Positoin Value", positionValue);
+				SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
+
+				wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
+				wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
 #else
     //cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
     if(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)> 0.1){

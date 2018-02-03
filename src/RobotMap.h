@@ -33,15 +33,17 @@
 
 // CAN bus addresses
 // -----------------
-#define CAN_PDP					0
-#define CAN_TALON_LEFT_FRONT	1
-#define CAN_TALON_RIGHT_FRONT	2
+#define CAN_PDP				0
+#define CAN_TALON_LEFT_FRONT		1
+#define CAN_TALON_RIGHT_FRONT		2
 #define CAN_TALON_LEFT_REAR		3
-#define CAN_TALON_RIGHT_REAR	4
-#define CAN_TALON_ARM_MOTOR		5
-#define CAN_TALON_IN_OUT_MOTOR	7
-#define CAN_TALON_CLIMB_MOTOR	6
-#define CAN_PCM					11
+#define CAN_TALON_RIGHT_REAR		4
+#define CAN_TALON_IN_OUT_MOTOR		5
+#define CAN_TALON_WRIST_MOTOR		6
+#define CAN_TALON_ARM_MOTOR		7
+#define CAN_TALON_CLIMB_MOTOR		8
+#define CAN_TALON_CLIMB_MOTOR2		9
+#define CAN_PCM				11
 
 // PCM Channels
 #define PCM_CHAN_CLIMB_UP		0
