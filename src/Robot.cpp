@@ -68,6 +68,7 @@ class Robot: public frc::IterativeRobot {
 	DigitalInput *		limitArm;
 
 	float				fGyroCommandAngle; 	// Gryo angle to seek
+	bool 				bPresetTurning;
 
 	AnalogInput * 		AnalogIn;
 
@@ -319,18 +320,33 @@ void TeleopPeriodic() {
     fYStick = pclXbox->GetY(frc::XboxController::kLeftHand) * -1.0;
     fRotate = pclXbox->GetX(frc::XboxController::kRightHand);
 #endif
-
-    // Calculate a rotation rate from robot angle error
-    fRotate = pNavGyro->GetYawError() * -0.05;
-
+    if(pclXbox->GetPOV()>-1 && bPresetTurning == false)
+    {
+    	pNavGyro->fGyroCommandYaw = pNavGyro->fGyroCommandYaw + pclXbox->GetPOV();
+    	bPresetTurning = true;
+    }
+    if(fabs(pNavGyro->GetYawError())<10)
+    {
+    	bPresetTurning = false;
+    }
     // Handle manual rotation
+    //bAllowRotate = pclXbox->GetTriggerAxis(frc::XboxController::kRightHand)>.5;
+    bAllowRotate = pclXbox->GetX(frc::XboxController::kRightHand)>.1||
+    			   pclXbox->GetX(frc::XboxController::kRightHand)<-.1;
     if (bAllowRotate)
 	{
-	fRotate = fXStick * 0.5;
-	fXStick = 0.0;
+	fRotate = pclXbox->GetX(frc::XboxController::kRightHand);
 	pNavGyro->SetCommandYawToCurrent();
 	}
-
+    else
+    {
+        // Calculate a rotation rate from robot angle error
+    	fRotate = pNavGyro->GetYawError() * -0.05;
+    	if(bPresetTurning)
+    	{
+    		fRotate = fRotate/2;
+    	}
+    }
     // Send drive values to the drive train
     m_robotDrive->DriveCartesian(fXStick, fYStick, fRotate, 0.0);
 
