@@ -32,6 +32,7 @@ public:
 #endif
 
     float		fGyroCommandYaw;
+    bool		bPresetTurning;
 
     // Methods
     void   Init();
@@ -39,6 +40,8 @@ public:
     void   SetCommandYawToCurrent();
     float  GetYaw();
     float  GetYawError();
+    float  CorrectRotate(float fRotateLess);
+    float  GetRotate();
 
 };
 

@@ -107,9 +107,29 @@ float NavGyro::GetYaw()
 
 float  NavGyro::GetYawError()
     {
-    return fNormalizeAngle180(GetYaw() - fGyroCommandYaw);
+    return -fNormalizeAngle180(GetYaw() - fGyroCommandYaw);
     }
 
+
+//-----------------------------------------------------------------------------
+float  NavGyro::CorrectRotate(float fRotateLess)
+{
+	if(fRotateLess >  0.5)
+	{
+		fRotateLess =  0.5;
+	}
+	if(fRotateLess < -0.5)
+	{
+		fRotateLess = -0.5;
+	}
+	return fRotateLess;
+}
+float  NavGyro::GetRotate()
+	{
+		float YawError = this->GetYawError() *0.05;
+		YawError = this->CorrectRotate(YawError);
+		return YawError;
+	}
 
 // ----------------------------------------------------------------------------
 // Utilities
