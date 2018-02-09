@@ -28,7 +28,7 @@
 
 // Select arm and in/out speed control mode (the default) or position mode using
 // position sensors.
-#define ARM_UP_DOWN_USING_POSITION
+//#define ARM_UP_DOWN_USING_POSITION
 //#define IN_OUT_USING_POSITION
 
 // CAN bus addresses
@@ -39,17 +39,17 @@
 #define CAN_TALON_LEFT_REAR		3
 #define CAN_TALON_RIGHT_REAR		4
 #define CAN_TALON_IN_OUT_MOTOR		5
-#define CAN_TALON_WRIST_MOTOR		6
+#define CAN_TALON_WRIST_MOTOR		8
 #define CAN_TALON_ARM_MOTOR		7
-#define CAN_TALON_CLIMB_MOTOR		8
+#define CAN_TALON_CLIMB_MOTOR		6
 #define CAN_TALON_CLIMB_MOTOR2		9
 #define CAN_PCM				11
 
 // PCM Channels
 #define PCM_CHAN_CLIMB_UP		0
 #define PCM_CHAN_CLIMB_DOWN		1
-#define PCM_CHAN_ARM_UP			3
-#define PCM_CHAN_ARM_DOWN		4
+#define PCM_CHAN_ARM_UP			2
+#define PCM_CHAN_ARM_DOWN		3
 
 // Digital I/O Channels
 #define DIO_LIMIT_SW			0
