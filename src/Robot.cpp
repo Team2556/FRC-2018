@@ -76,9 +76,12 @@ class Robot: public frc::IterativeRobot {
 	AnalogInput*		AnalogIn2;
 
 	int					iCommandedArmPosition;	// Position is 0 to 1023
+	int					iComandedExtensionPostion;
 
 	int positionValue = 0;
 	int stateValue = 0;
+	bool limitBool = false;
+	int armAuto;
 	NavGyro	*		pNavGyro;
 
 // ----------------------------------------------------------------------------
@@ -116,12 +119,12 @@ public:
     am->Config_kI(0, 0.0, 0.0);		// Integration term, play with this next, about 1/1000 of P term is a good start
     am->Config_kD(0, 0.0, 0.0);		// Differentiaion term, probably not needed
 //		TalonTest->SetInverted(true);
-		am->ConfigPeakCurrentLimit(3.0,0);
+		am->ConfigPeakCurrentLimit(0.01,0);
 //		am->EnableCurrentLimit(true);
     	//am->SetInverted(true);
     am->Set(ControlMode::PercentOutput, 0);	// Set speed control for now, and set speed to zero
 #else
-    am->Set(ControlMode::PercentOutput, 0);	// Set good ol' speed control
+    am->Set(ControlMode::PercentOutput, 0.01);	// Set good ol' speed control
 #endif
 
     // Setup the In/Out arm controller
@@ -302,7 +305,8 @@ void TeleopInit() {
 #ifdef ARM_UP_DOWN_USING_POSITION
 		// Hold the current arm position where ever it currently is
 		iCommandedArmPosition = am->GetSelectedSensorPosition(0);
-		am->Set(ControlMode::Position, 120);
+		iComandedExtensionPostion=iom->GetSelectedSensorPosition(0);
+		//am->Set(ControlMode::Position, 120);
 #else
     // Turn off the arm motor
     am->Set(ControlMode::PercentOutput, 0);
@@ -367,19 +371,25 @@ void TeleopPeriodic() {
 
 		//Adding a new pneumatic function for potential climber or gear placement
 		//limit switch and manual override
-	if(pclXbox2->GetXButtonPressed())
+	if(pclXbox2->GetXButton())
 	{
 		stateValue++;
 	}
-	//else if(limitArm->DigitalInput() == 0)
-//	{
-//		stateValue++;
-//	}
+	else if(limitArm->Get()==0 && pclXbox2->GetAButtonReleased())
+	{
+		limitBool = true;
+	}
 	else if(pclXbox2->GetAButtonPressed())
 	{
 		stateValue--;
+		limitBool = false;
 	}
-	else if(stateValue> 1)
+	else if(pclXbox2->GetAButtonPressed() && limitArm->Get()==0)
+	{
+		stateValue--;
+		limitBool = false;
+	}
+	else if(stateValue > 1)
 	{
 		stateValue = 1;
 	}
@@ -389,33 +399,31 @@ void TeleopPeriodic() {
 	}
 
 
-	if(stateValue == 1)
+	if(stateValue == 1 || limitBool == true)
 	{
 		armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 	}
-	else if(stateValue == 0)
+	else if(stateValue == 0 || limitBool == false)
 	{
 		armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+	}
+	else{
+		armSolenoid->Set(frc::DoubleSolenoid::Value::kOff);
 	}
 
 	SmartDashboard::PutNumber("stateValue", stateValue);
 	cm->Set(pclXbox2->GetY(frc::XboxController::kRightHand));
 	cm2->Set(pclXbox2->GetY(frc::XboxController::kRightHand));
-	if(pclXbox2->GetBumper(frc::XboxController::kRightHand))
+	if(pclXbox2->GetY(frc::XboxController::kRightHand) > - 0.3)
 	{
-		wm->Set(0.6);
+		climbSolenoid->Set(frc::DoubleSolenoid::kForward);
 	}
-	else if(pclXbox2->GetBumper(frc::XboxController::kLeftHand))
-	{
-		wm->Set(-0.6);
-	}
-	else
-	{
-		wm->Set(0);
+	else{
+		climbSolenoid->Set(frc::DoubleSolenoid::kReverse);
 	}
 	SmartDashboard::PutNumber("limitswith 1",limitArm->Get());
 
-    climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse: frc::DoubleSolenoid::Value::kForward);
+    //climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse: frc::DoubleSolenoid::Value::kForward);
 
 #ifdef ARM_UP_DOWN_USING_POSITION
 				if(pclXbox2->GetBumperPressed(frc::XboxController::kRightHand))
@@ -442,21 +450,22 @@ void TeleopPeriodic() {
 				// changing value of iCommandedArmPosition in code
 				if(positionValue == 0)
 				{
-					am->Set(ControlMode::Position, 100);
-					//iom->Set(ControlMode::Position,0);
+					am->Set(ControlMode::Position, 200);
+					iom->Set(ControlMode::Position,600);
 				}
 				else if(positionValue == 1)
 				{
 					am->Set(ControlMode::Position, 500);
-					//iom->Set(ControlMode::Position,500);
+					iom->Set(ControlMode::Position,500);
 				}
 				else if(positionValue == 2)
 				{
 					am->Set(ControlMode::Position, 800);
-					//iom->Set(ControlMode::Position,800);
+					iom->Set(ControlMode::Position,800);
 				}
 				SmartDashboard::PutNumber("Positoin Value", positionValue);
 				SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
+				SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
 
 				wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
 				wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
@@ -473,6 +482,45 @@ void TeleopPeriodic() {
 	am->Set(0);
     }
     iom->Set(pclXbox2->GetX(frc::XboxController::kLeftHand));
+    if(pclXbox2->GetBumper(frc::XboxController::kRightHand))
+    	{
+    		wm->Set(1);
+    	}
+    	else if(pclXbox2->GetBumper(frc::XboxController::kLeftHand))
+    	{
+
+    		wm->Set(-1);
+    	}
+    	else
+    	{
+    		wm->Set(0);
+    	}
+    armAuto = 469 - am->GetSelectedSensorPosition(0);
+    if(armAuto < 0)
+    {
+    	armAuto=armAuto*-1;
+    }
+
+    if(armAuto > 469)
+    {
+    	armAuto = armAuto * 2.05;
+    }
+    else if(armAuto < 469)
+    {
+    	armAuto = armAuto * 3.5;
+    }
+    else{
+    	armAuto = 0;
+    }
+    iom->Set(ControlMode::Position,armAuto);
+    SmartDashboard::PutNumber("Positoin Value", positionValue);
+    SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
+    SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
+    SmartDashboard::PutNumber("armAuto: ",armAuto);
+    SmartDashboard::PutNumber("Front Left", lf->GetMotorOutputPercent());
+    SmartDashboard::PutNumber("Front Right", rf->GetMotorOutputPercent());
+    SmartDashboard::PutNumber("Back Left", lr->GetMotorOutputPercent());
+    SmartDashboard::PutNumber("Back Right", rr->GetMotorOutputPercent());
 #endif
 
 } // end TeleopPeriodic()
