@@ -126,7 +126,11 @@ public:
 #else
     am->Set(ControlMode::PercentOutput, 0.01);	// Set good ol' speed control
 #endif
-
+    am->ConfigOpenloopRamp(0,0);
+    lf->ConfigOpenloopRamp(0,0);
+    rf->ConfigOpenloopRamp(0,0);
+    rr->ConfigOpenloopRamp(0,0);
+    lr->ConfigOpenloopRamp(0,0);
     // Setup the In/Out arm controller
 #ifdef ARM_UP_DOWN_USING_POSITION
 // Use the same setup calls as the arm control above
@@ -414,16 +418,10 @@ void TeleopPeriodic() {
 	SmartDashboard::PutNumber("stateValue", stateValue);
 	cm->Set(pclXbox2->GetY(frc::XboxController::kRightHand));
 	cm2->Set(pclXbox2->GetY(frc::XboxController::kRightHand));
-	if(pclXbox2->GetY(frc::XboxController::kRightHand) > - 0.3)
-	{
-		climbSolenoid->Set(frc::DoubleSolenoid::kForward);
-	}
-	else{
-		climbSolenoid->Set(frc::DoubleSolenoid::kReverse);
-	}
+
 	SmartDashboard::PutNumber("limitswith 1",limitArm->Get());
 
-    //climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse: frc::DoubleSolenoid::Value::kForward);
+    climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse: frc::DoubleSolenoid::Value::kForward);
 
 #ifdef ARM_UP_DOWN_USING_POSITION
 				if(pclXbox2->GetBumperPressed(frc::XboxController::kRightHand))
