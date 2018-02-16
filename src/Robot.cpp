@@ -326,6 +326,7 @@ void TeleopPeriodic() {
     float 			fYStick = 0.0;
     float			fRotate = 0.0;
     bool			bAllowRotate = false;
+    static int 		ArmControlMode;
 
 		// Get drive values from the joystick or the XBox controller
 #ifdef JOYSTICK
@@ -423,75 +424,106 @@ void TeleopPeriodic() {
 
     climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse: frc::DoubleSolenoid::Value::kForward);
 
-#ifdef ARM_UP_DOWN_USING_POSITION
-				if(pclXbox2->GetBumperPressed(frc::XboxController::kRightHand))
-				{
-					positionValue++;
-				}
+    if (pclXbox->GetStickButtonPressed(frc::XboxController::kRightHand))
+    {
+    	ArmControlMode--;
+    	ArmControlMode = fabs(ArmControlMode);
+    	positionValue = -2;
+    }
+// presets
+    if (ArmControlMode == 0)
+    {
+		static float fPresetValues[3] = {200, 500, 800};
+		if(pclXbox2->GetBumperPressed(frc::XboxController::kRightHand))
+		{
+			positionValue++;
+		}
 
-				else if(pclXbox2->GetBumperPressed(frc::XboxController::kLeftHand))
-				{
-					positionValue--;
-				}
+		else if(pclXbox2->GetBumperPressed(frc::XboxController::kLeftHand))
+		{
+			positionValue--;
+		}
 
-				else if(positionValue < 0)
+		if(positionValue == -2)
+		{
+				int currentPositionValue = am->GetSelectedSensorPosition(0);
+				int closestPreset = 0;
+				int distanceFromClosest = 1000000000;//arbitrary number to make the first value smaller 100% of the time
+				for (int i = 0; i<=2; i++)
 				{
-					positionValue = 0;
+					int ClosenessTest = fabs(currentPositionValue - fPresetValues[i]);
+					if (ClosenessTest<distanceFromClosest)
+					{
+						distanceFromClosest = ClosenessTest;
+						closestPreset = i;
+					}
 				}
+				positionValue = closestPreset;
+		}
+		else if(positionValue < 0)
+		{
+			positionValue = 0;
+		}
 
-				else if(positionValue > 2)
-				{
-					positionValue = 2;
-				}
+		else if(positionValue > 2)
+		{
+			positionValue = 2;
+		}
 
-				// Put position control code in here. Stay in same position for now. Move arm up and down by
-				// changing value of iCommandedArmPosition in code
-				if(positionValue == 0)
-				{
-					am->Set(ControlMode::Position, 200);
-					iom->Set(ControlMode::Position,600);
-				}
-				else if(positionValue == 1)
-				{
-					am->Set(ControlMode::Position, 500);
-					iom->Set(ControlMode::Position,500);
-				}
-				else if(positionValue == 2)
-				{
-					am->Set(ControlMode::Position, 800);
-					iom->Set(ControlMode::Position,800);
-				}
-				SmartDashboard::PutNumber("Positoin Value", positionValue);
-				SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
-				SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
+		// Put position control code in here. Stay in same position for now. Move arm up and down by
+		// changing value of iCommandedArmPosition in code
+		if(positionValue == 0)
+		{
+			am->Set(ControlMode::Position, fPresetValues[0]);
+			iom->Set(ControlMode::Position,600);
+		}
+		else if(positionValue == 1)
+		{
+			am->Set(ControlMode::Position, fPresetValues[1]);
+			iom->Set(ControlMode::Position,500);
+		}
+		else if(positionValue == 2)
+		{
+			am->Set(ControlMode::Position, fPresetValues[2]);
+			iom->Set(ControlMode::Position,800);
+		}
+		SmartDashboard::PutNumber("Positoin Value", positionValue);
+		SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
+		SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
 
-				wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
-				wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
-#else
+		wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
+		wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
+    }
+
+
+	//Manual Control
+    else if (ArmControlMode == 1)
+    {
+
     //cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
     if(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)> 0.1){
-	am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)*-1);
+	am->Set(ControlMode::PercentOutput, pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)*-1);
     }
     else if(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)> 0.1){
-	am->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand));
+	am->Set(ControlMode::PercentOutput, pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand));
     }
     else
     {
 	am->Set(0);
     }
-    iom->Set(pclXbox2->GetX(frc::XboxController::kLeftHand));
+    iom->Set(ControlMode::PercentOutput, pclXbox2->GetX(frc::XboxController::kLeftHand));
     if(pclXbox2->GetBumper(frc::XboxController::kRightHand))
     	{
-    		wm->Set(1);
+    		wm->Set(ControlMode::PercentOutput, 1);
     	}
     	else if(pclXbox2->GetBumper(frc::XboxController::kLeftHand))
     	{
 
-    		wm->Set(-1);
+    		wm->Set(ControlMode::PercentOutput, -1);
     	}
     	else
     	{
-    		wm->Set(0);
+    		wm->Set(ControlMode::PercentOutput, 0);
     	}
     armAuto = 469 - am->GetSelectedSensorPosition(0);
     if(armAuto < 0)
@@ -511,6 +543,7 @@ void TeleopPeriodic() {
     	armAuto = 0;
     }
     iom->Set(ControlMode::Position,armAuto);
+    }
     SmartDashboard::PutNumber("Positoin Value", positionValue);
     SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
     SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
@@ -519,7 +552,7 @@ void TeleopPeriodic() {
     SmartDashboard::PutNumber("Front Right", rf->GetMotorOutputPercent());
     SmartDashboard::PutNumber("Back Left", lr->GetMotorOutputPercent());
     SmartDashboard::PutNumber("Back Right", rr->GetMotorOutputPercent());
-#endif
+
 
 } // end TeleopPeriodic()
 
