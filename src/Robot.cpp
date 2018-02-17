@@ -423,7 +423,7 @@ void TeleopPeriodic() {
 
 	SmartDashboard::PutNumber("limitswith 1",limitArm->Get());
 
-    climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse: frc::DoubleSolenoid::Value::kForward);
+    climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kForward: frc::DoubleSolenoid::Value::kReverse);
     SmartDashboard::PutNumber("Arm Control Number", ArmControlMode);
     if (pclXbox2->GetStickButtonPressed(frc::XboxController::kRightHand))
     {
@@ -432,6 +432,9 @@ void TeleopPeriodic() {
     	positionValue = -2;
     }
     pPrefs->PutInt("Preset Position", positionValue);
+
+    wm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
+
 // presets
     if (ArmControlMode == 0)
     {
@@ -494,8 +497,6 @@ void TeleopPeriodic() {
 		SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
 		SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
 
-		wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand));
-		wm->Set(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)*-1);
     }
 
 
@@ -515,19 +516,6 @@ void TeleopPeriodic() {
 	am->Set(0);
     }
     iom->Set(ControlMode::PercentOutput, pclXbox2->GetX(frc::XboxController::kLeftHand));
-    if(pclXbox2->GetBumper(frc::XboxController::kRightHand))
-    	{
-    		wm->Set(ControlMode::PercentOutput, 1);
-    	}
-    	else if(pclXbox2->GetBumper(frc::XboxController::kLeftHand))
-    	{
-
-    		wm->Set(ControlMode::PercentOutput, -1);
-    	}
-    	else
-    	{
-    		wm->Set(ControlMode::PercentOutput, 0);
-    	}
     armAuto = 469 - am->GetSelectedSensorPosition(0);
     if(armAuto < 0)
     {
