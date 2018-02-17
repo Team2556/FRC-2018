@@ -84,6 +84,9 @@ class Robot: public frc::IterativeRobot {
 	int armAuto;
 	int armPot;
 	NavGyro	*		pNavGyro;
+
+	int AutonomousToUse;
+	int iTurn = 0;
 	frc::Preferences *pPrefs;
 
 // ----------------------------------------------------------------------------
@@ -213,90 +216,201 @@ void RobotInit() {
      */
 void AutonomousInit() override {
     std::string gameData;
-
+    int iPosition;
     gameData = frc::DriverStation::GetInstance().GetGameSpecificMessage();
 
     if(gameData[0] == 'L'){
-	SmartDashboard::PutString("DB/String 0", "Left");
+	SmartDashboard::PutString("Our Switch", "Left");
+	AutonomousToUse = 1;
     }
     else if(gameData[0]=='R'){
-	SmartDashboard::PutString("DB/String 0", "Right");
+	SmartDashboard::PutString("Our Switch", "Right");
+	AutonomousToUse = 2;
     }
     else{
-	SmartDashboard::PutString("DB/String 0", "UnKnown");
+	SmartDashboard::PutString("Our Switch", "Unknown");
     }
 
     if(gameData[1] == 'L'){
-	SmartDashboard::PutString("DB/String 1", "Left");
+	SmartDashboard::PutString("Scale", "Left");
     }
     else if(gameData[1]=='R'){
-	SmartDashboard::PutString("DB/String 1", "Right");
+	SmartDashboard::PutString("Scale", "Right");
     }
     else{
-	SmartDashboard::PutString("DB/String 1", "UnKnown");
+	SmartDashboard::PutString("Scale", "UnKnown");
 		    }
     if(gameData[2] == 'L'){
-	SmartDashboard::PutString("DB/String 2", "Left");
+	SmartDashboard::PutString("Opposing Switch", "Left");
     }
     else if(gameData[2]=='R'){
-	SmartDashboard::PutString("DB/String 2", "Right");
+	SmartDashboard::PutString("Opposing Switch", "Right");
     }
     else{
-	SmartDashboard::PutString("DB/String 2", "UnKnown");
+	SmartDashboard::PutString("Opposing Switch", "UnKnown");
     }
 
+    iPosition = frc::DriverStation::GetInstance().GetLocation();// returns the player station number 1 is left, 2 is middle, 3 is right (from inside the player station)
+
+    AutonomousToUse = AutonomousToUse*iPosition;
+/*    if (iPosition == 1 && gameData[0] == 'L')
+    {
+    	AutonomousToUse = 1;
+    }
+    if (iPosition == 1 && gameData[0] == 'R')
+	{
+		AutonomousToUse = 2;
+	}
+    if (iPosition == 2 && gameData[0] == 'L')
+	{
+		AutonomousToUse = 3;
+	}
+    if (iPosition == 2 && gameData[0] == 'R')
+	{
+		AutonomousToUse = 4;
+	}
+    if (iPosition == 3 && gameData[0] == 'L')
+	{
+		AutonomousToUse = 5;
+	}
+    if (iPosition == 3 && gameData[0] == 'R')
+	{
+		AutonomousToUse = 6;
+	}*/
+    lf->ConfigOpenloopRamp(0,0);
+    lr->ConfigOpenloopRamp(0,0);
+    rf->ConfigOpenloopRamp(0,0);
+    rr->ConfigOpenloopRamp(0,0);
     pNavGyro->SetCommandYawToCurrent();
+    iTurn = 0;
+    //AutonomousToUse = 1;
     } // end AutonomousInit()
 
 
 
 // ----------------------------------------------------------------------------
 
-void AutonomousPeriodic() {
-#if 0
-    std::string sliderString ;
-    double dSliderDrive;
-    dSliderDrive = (SmartDashboard::GetNumber("DB/Slider 0", 0.0)-2.5)/2.5;
-    sliderString = std::to_string(dSliderDrive);
-    SmartDashboard::PutString("DB/String 0", sliderString.c_str());
-    m_robotDrive->DriveCartesian(dSliderDrive, 0,0,0 );
-    std::string sliderString2 ;
-    double dSliderForRev;
-    dSliderForRev = (SmartDashboard::GetNumber("DB/Slider 1", 0.0)-2.5)/2.5;
-    sliderString = std::to_string(dSliderForRev);
-    SmartDashboard::PutString("DB/String 1", sliderString2.c_str());
-    m_robotDrive->DriveCartesian(0, dSliderForRev,0,0 );
-#endif
-#if 0
-    float angle = gyro.GetAngle();
-    std::string timerShow ;
+void AutonomousPeriodic()
+{
+	double xMove = 0;
+	double yMove = 0;
+	double fRotate = 0;
+	double timer = ((DriverStation::GetInstance().GetMatchTime()-7.5)*-1)+7.5;
+	SmartDashboard::PutNumber("Timer", timer);
+	SmartDashboard::PutNumber("Autonomous Number", AutonomousToUse);
+	static int iPath;
 
-    double timer = (((DriverStation::GetInstance().GetMatchTime())-7.5)*-1)+7.5;
-    timerShow = std::to_string(timer);
-    SmartDashboard::PutString("DB/String 4", timerShow.c_str());
+	if (AutonomousToUse == 2)
+	{
+		if (timer<pPrefs->GetFloat("2Path1Start", 0))
+		{
+			iPath = 0;
+		}
+		else if (timer>(pPrefs->GetFloat("2Path1Start", 0)) && timer<(pPrefs->GetFloat("2Path1End",0)))
+		{
+			iPath = 1;
+		}
+		else if (timer>(pPrefs->GetFloat("2Path2Start", 0)) && timer<(pPrefs->GetFloat("2Path2End",0)))
+		{
+			iPath =2;
+		}
+		else if (timer>(pPrefs->GetFloat("2Path3Start", 0)) && timer<(pPrefs->GetFloat("2Path3End",0)))
+		{
+			iPath = 3;
+		}
+		else
+		{
+			iPath = 4;
+		}
+		if (iPath == 0)
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+		else if (iPath == 1)
+		{
+			xMove = pPrefs->GetDouble("2Path1X",0);
+			yMove = pPrefs->GetDouble("2Path1Y",0);
+		}
+		else if (iPath == 2)
+		{
+			xMove = pPrefs->GetDouble("2Path2X", 0);
+			yMove = pPrefs->GetDouble("2Path2Y", 0);
+		}
+		else if (iPath == 3)
+		{
+			xMove = pPrefs->GetDouble("2Path3X", 0);
+			yMove = pPrefs->GetDouble("2Path3Y", 0);
+		}
 
-    double atimer = DriverStation::GetInstance().GetMatchTime();
-    if(atimer >= 12.4){
-	    m_robotDrive->DriveCartesian(0,0,0,-angle * kP);
-    }
-    else if((atimer >= 12.2) && (atimer > 0)){
-	    m_robotDrive->DriveCartesian(0,1,0,0);
-    }
-    else if((atimer >= 11.8)&&(atimer > 0)){
-	    m_robotDrive->DriveCartesian(1,0,0,0);
-    }
-    else if((atimer >= 11)&&(atimer > 0)){
-	    m_robotDrive->DriveCartesian(0,0,0,0);
-    }
-#endif
 
-    m_robotDrive->DriveCartesian(0.0, 0.0, pNavGyro->GetYawError() * -0.05, 0.0);
+		if (iTurn == 0 && timer>pPrefs->GetDouble("2Turn0Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn0Amount",0)));
+			iTurn++;
+		}
+		if (iTurn == 1 && timer>pPrefs->GetDouble("2Turn1Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn1Amount",0)));
+			iTurn++;
+		}
+		if (iTurn == 2 && timer>pPrefs->GetDouble("2Turn2Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn2Amount",0)));
+			iTurn++;
+		}
+	}
 
-    std::string		analog;
-    int analogG = AnalogIn->PIDGet();
-    analog = std::to_string(analogG);
-    SmartDashboard::PutString("DB/String 6", analog.c_str());
-    } // end AutonomousPeriodic()
+
+
+	if (AutonomousToUse == 3)
+	{
+		if (timer<pPrefs->GetFloat("3Path1Start", 0))
+		{
+			iPath = 0;
+		}
+		else if (timer>(pPrefs->GetFloat("3Path1Start", 0)) && timer<(pPrefs->GetFloat("3Path1End",0)))
+		{
+			iPath = 1;
+		}
+		else
+		{
+			iPath =2;
+		}
+		if (iPath == 0)
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+		else if (iPath == 1)
+		{
+			xMove = pPrefs->GetDouble("3Path1X",0);
+			yMove = pPrefs->GetDouble("3Path1Y",0);
+		}
+		else if (iPath == 2)
+		{
+			xMove = pPrefs->GetDouble("3Path2X", 0);
+			yMove = pPrefs->GetDouble("3Path2Y", 0);
+		}
+
+
+		if (iTurn == 0 && timer>pPrefs->GetDouble("3Turn0Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("3Turn0Amount",0)));
+			iTurn++;
+		}
+	}
+	/*if (pNavGyro->GetYawError() >10)
+	{
+	fRotate = pNavGyro->GetRotate()/2;
+	}
+	else
+	*/
+		fRotate = pNavGyro->GetRotate();
+	//}
+	m_robotDrive->DriveCartesian(xMove, yMove, fRotate, 0.0);
+	SmartDashboard::PutNumber("Turn Number", iTurn);
+} // end AutonomousPeriodic()
 
 
 // ----------------------------------------------------------------------------
