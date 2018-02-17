@@ -83,6 +83,7 @@ class Robot: public frc::IterativeRobot {
 	bool limitBool = false;
 	int armAuto;
 	NavGyro	*		pNavGyro;
+	frc::Preferences *pPrefs;
 
 // ----------------------------------------------------------------------------
 // Initialization
@@ -169,7 +170,7 @@ public:
 
 		AnalogIn = new AnalogInput(0);
 		AnalogIn2 = new AnalogInput(1);
-
+	pPrefs = frc::Preferences::GetInstance();
     // Setup the gyro
     pNavGyro = new NavGyro();
     } // end Robot class constructor
@@ -315,7 +316,7 @@ void TeleopInit() {
     // Turn off the arm motor
     am->Set(ControlMode::PercentOutput, 0);
 #endif
-
+    positionValue = pPrefs->GetInt("Position Value", 1);
     }
 
 
@@ -423,16 +424,18 @@ void TeleopPeriodic() {
 	SmartDashboard::PutNumber("limitswith 1",limitArm->Get());
 
     climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse: frc::DoubleSolenoid::Value::kForward);
-
-    if (pclXbox->GetStickButtonPressed(frc::XboxController::kRightHand))
+    SmartDashboard::PutNumber("Arm Control Number", ArmControlMode);
+    if (pclXbox2->GetStickButtonPressed(frc::XboxController::kRightHand))
     {
     	ArmControlMode--;
     	ArmControlMode = fabs(ArmControlMode);
     	positionValue = -2;
     }
+    pPrefs->PutInt("Preset Position", positionValue);
 // presets
     if (ArmControlMode == 0)
     {
+    	SmartDashboard::PutString("Arm Control Type", "Preset");
 		static float fPresetValues[3] = {200, 500, 800};
 		if(pclXbox2->GetBumperPressed(frc::XboxController::kRightHand))
 		{
@@ -480,7 +483,7 @@ void TeleopPeriodic() {
 		else if(positionValue == 1)
 		{
 			am->Set(ControlMode::Position, fPresetValues[1]);
-			iom->Set(ControlMode::Position,500);
+			iom->Set(ControlMode::Position,100);
 		}
 		else if(positionValue == 2)
 		{
@@ -499,7 +502,7 @@ void TeleopPeriodic() {
 	//Manual Control
     else if (ArmControlMode == 1)
     {
-
+    SmartDashboard::PutString("Arm Control Type", "Manual");
     //cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
     if(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)> 0.1){
 	am->Set(ControlMode::PercentOutput, pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)*-1);
