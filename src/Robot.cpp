@@ -82,6 +82,7 @@ class Robot: public frc::IterativeRobot {
 	int stateValue = 0;
 	bool limitBool = false;
 	int armAuto;
+	int armPot;
 	NavGyro	*		pNavGyro;
 	frc::Preferences *pPrefs;
 
@@ -107,7 +108,7 @@ public:
 		cm2->Set(ControlMode::PercentOutput, 0);
 
     // Setup the Up/Down arm controller
-#ifdef ARM_UP_DOWN_USING_POSITION
+
     // Closed loop tracking with analog voltage as the position sensor
     am->ConfigSelectedFeedbackSensor(FeedbackDevice::Analog, 0, 0); /* PIDLoop=0,timeoutMs=0 */
     // Dont' ask
@@ -115,18 +116,17 @@ public:
     // Tracking algorithm parmater setup. These need to be correct but can be tricky to get right.
     // These can be adjusted in real time through the roborio web interface.
     am->SelectProfileSlot(0, 0);	// Set the first of two "profile" slots
-    am->Config_kF(0, 0.0, 0.0);		// Feed forward term, arm may need a little, we will see
-    am->Config_kP(0, 10.0, 0.0);	// Proportional term, play with this first
-    am->Config_kI(0, 0.0, 0.0);		// Integration term, play with this next, about 1/1000 of P term is a good start
-    am->Config_kD(0, 0.0, 0.0);		// Differentiaion term, probably not needed
+   // am->Config_kF(0, 0.0, 0.0);		// Feed forward term, arm may need a little, we will see
+  //  am->Config_kP(0, 0.1, 0.0);	// Proportional term, play with this first
+   //am->Config_kI(0, 0.0, 0.0);		// Integration term, play with this next, about 1/1000 of P term is a good start
+   // am->Config_kD(0, 0.0, 0.0);		// Differentiaion term, probably not needed
+
 //		TalonTest->SetInverted(true);
-		am->ConfigPeakCurrentLimit(0.01,0);
+	//	am->ConfigPeakCurrentLimit(0.01,0);
 //		am->EnableCurrentLimit(true);
     	//am->SetInverted(true);
     am->Set(ControlMode::PercentOutput, 0);	// Set speed control for now, and set speed to zero
-#else
-    am->Set(ControlMode::PercentOutput, 0.01);	// Set good ol' speed control
-#endif
+
     am->ConfigOpenloopRamp(0,0);
     lf->ConfigOpenloopRamp(0,0);
     rf->ConfigOpenloopRamp(0,0);
@@ -435,6 +435,7 @@ void TeleopPeriodic() {
 
     wm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
 
+
 // presets
     if (ArmControlMode == 0)
     {
@@ -481,18 +482,28 @@ void TeleopPeriodic() {
 		if(positionValue == 0)
 		{
 			am->Set(ControlMode::Position, fPresetValues[0]);
-			iom->Set(ControlMode::Position,600);
+			//iom->Set(ControlMode::Position,600);
 		}
 		else if(positionValue == 1)
 		{
 			am->Set(ControlMode::Position, fPresetValues[1]);
-			iom->Set(ControlMode::Position,100);
+			//iom->Set(ControlMode::Position,100);
 		}
 		else if(positionValue == 2)
 		{
 			am->Set(ControlMode::Position, fPresetValues[2]);
-			iom->Set(ControlMode::Position,800);
+			//iom->Set(ControlMode::Position,800);
 		}
+
+		 if(iom->GetSelectedSensorPosition(0)  <=  145)
+		       {
+
+		        //	iom->Set(ControlMode::Position,145);
+		       }
+		     else if(iom->GetSelectedSensorPosition(0) >= 540){
+		     //iom->Set(ControlMode::Position,540);
+		     }
+		 armPot = am->GetSelectedSensorPosition(0);
 		SmartDashboard::PutNumber("Positoin Value", positionValue);
 		SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
 		SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
@@ -506,16 +517,12 @@ void TeleopPeriodic() {
     SmartDashboard::PutString("Arm Control Type", "Manual");
     //cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
     if(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)> 0.1){
-	am->Set(ControlMode::PercentOutput, pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)*-1);
+	armPot= armPot+3;
     }
     else if(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)> 0.1){
-	am->Set(ControlMode::PercentOutput, pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand));
+    	armPot= armPot-3;
     }
-    else
-    {
-	am->Set(0);
-    }
-    iom->Set(ControlMode::PercentOutput, pclXbox2->GetX(frc::XboxController::kLeftHand));
+    //iom->Set(ControlMode::PercentOutput, pclXbox2->GetX(frc::XboxController::kLeftHand));
     armAuto = 469 - am->GetSelectedSensorPosition(0);
     if(armAuto < 0)
     {
@@ -533,12 +540,17 @@ void TeleopPeriodic() {
     else{
     	armAuto = 0;
     }
-    iom->Set(ControlMode::Position,armAuto);
+    am->Set(ControlMode::Position,armPot);
+    //iom->Set(ControlMode::Position,armAuto);
+
+
     }
+
     SmartDashboard::PutNumber("Positoin Value", positionValue);
     SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
     SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
     SmartDashboard::PutNumber("armAuto: ",armAuto);
+    SmartDashboard::PutNumber("armPot: ",armPot);
     SmartDashboard::PutNumber("Front Left", lf->GetMotorOutputPercent());
     SmartDashboard::PutNumber("Front Right", rf->GetMotorOutputPercent());
     SmartDashboard::PutNumber("Back Left", lr->GetMotorOutputPercent());
