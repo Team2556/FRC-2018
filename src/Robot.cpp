@@ -254,13 +254,13 @@ void AutonomousInit() override {
     iPosition = SmartDashboard::GetString("Player Station", "L");
 
 
-    if (iPosition == "L" && gameData[0] == 'L')
+    if (iPosition == "L" && gameData[1] == 'L')
     {
-    	AutonomousToUse = 2;
+    	AutonomousToUse = 1;
     }
-    else if (iPosition == "L" && gameData[1] == 'L')
+    else if (iPosition == "L" && gameData[0] == 'L')
 	{
-		AutonomousToUse = 1;
+		AutonomousToUse = 2;
 	}
 
     if (iPosition == "M" && gameData[0] == 'L')
