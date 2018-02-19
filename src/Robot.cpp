@@ -192,6 +192,7 @@ void RobotInit() {
 
     // Get the initial starting angle
     pNavGyro->Init();
+    //SmartDashboard::PutString("Player Station", "M");
 
 } // end RobotInit()
 
@@ -216,7 +217,7 @@ void RobotInit() {
      */
 void AutonomousInit() override {
     std::string gameData;
-    int iPosition;
+    std::string iPosition;
     gameData = frc::DriverStation::GetInstance().GetGameSpecificMessage();
 
     if(gameData[0] == 'L'){
@@ -250,33 +251,36 @@ void AutonomousInit() override {
 	SmartDashboard::PutString("Opposing Switch", "UnKnown");
     }
 
-    iPosition = frc::DriverStation::GetInstance().GetLocation();// returns the player station number 1 is left, 2 is middle, 3 is right (from inside the player station)
+    iPosition = SmartDashboard::GetString("Player Station", "L");
 
-    AutonomousToUse = AutonomousToUse*iPosition;
-/*    if (iPosition == 1 && gameData[0] == 'L')
+
+    if (iPosition == "L" && gameData[0] == 'L')
     {
-    	AutonomousToUse = 1;
+    	AutonomousToUse = 2;
     }
-    if (iPosition == 1 && gameData[0] == 'R')
+    else if (iPosition == "L" && gameData[1] == 'L')
 	{
-		AutonomousToUse = 2;
+		AutonomousToUse = 1;
 	}
-    if (iPosition == 2 && gameData[0] == 'L')
+
+    if (iPosition == "M" && gameData[0] == 'L')
 	{
 		AutonomousToUse = 3;
 	}
-    if (iPosition == 2 && gameData[0] == 'R')
+    if (iPosition == "M" && gameData[0] == 'R')
 	{
 		AutonomousToUse = 4;
 	}
-    if (iPosition == 3 && gameData[0] == 'L')
+
+    if (iPosition == "R" && gameData[0] == 'R')
 	{
 		AutonomousToUse = 5;
 	}
-    if (iPosition == 3 && gameData[0] == 'R')
+    else if (iPosition == "R" && gameData[1] == 'R')
 	{
 		AutonomousToUse = 6;
-	}*/
+	}
+
     lf->ConfigOpenloopRamp(0,0);
     lr->ConfigOpenloopRamp(0,0);
     rf->ConfigOpenloopRamp(0,0);
@@ -299,6 +303,72 @@ void AutonomousPeriodic()
 	SmartDashboard::PutNumber("Timer", timer);
 	SmartDashboard::PutNumber("Autonomous Number", AutonomousToUse);
 	static int iPath;
+	if (AutonomousToUse == 1)
+	{
+		if (timer<pPrefs->GetFloat("1Path1Start", 0))
+		{
+			iPath = 0;
+		}
+		else if (timer>(pPrefs->GetFloat("1Path1Start", 0)) && timer<(pPrefs->GetFloat("1Path1End",0)))
+		{
+			iPath = 1;
+		}
+		else if (timer>(pPrefs->GetFloat("1Path2Start", 0)) && timer<(pPrefs->GetFloat("1Path2End",0)))
+		{
+			iPath =2;
+		}
+		else if (timer>(pPrefs->GetFloat("1Path3Start", 0)) && timer<(pPrefs->GetFloat("1Path3End",0)))
+		{
+			iPath = 3;
+		}
+		else
+		{
+			iPath = 4;
+		}
+		if (iPath == 0)
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+		else if (iPath == 1)
+		{
+			xMove = pPrefs->GetDouble("1Path1X",0);
+			yMove = pPrefs->GetDouble("1Path1Y",0);
+			am->Set(ControlMode::Position, 600);
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+		}
+		else if (iPath == 2)
+		{
+			xMove = pPrefs->GetDouble("1Path2X", 0);
+			yMove = pPrefs->GetDouble("1Path2Y", 0);
+			am->Set(ControlMode::Position, 600);
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+		}
+		else if (iPath == 3)
+		{
+			xMove = pPrefs->GetDouble("1Path3X", 0);
+			yMove = pPrefs->GetDouble("1Path3Y", 0);
+			am->Set(ControlMode::Position, 600);
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+		}
+
+
+		if (iTurn == 0 && timer>pPrefs->GetDouble("1Turn0Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("1Turn0Amount",0)));
+			iTurn++;
+		}
+		if (iTurn == 1 && timer>pPrefs->GetDouble("1Turn1Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("1Turn1Amount",0)));
+			iTurn++;
+		}
+		if (iTurn == 2 && timer>pPrefs->GetDouble("1Turn2Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("1Turn2Amount",0)));
+			iTurn++;
+		}
+	}
 
 	if (AutonomousToUse == 2)
 	{
@@ -331,16 +401,22 @@ void AutonomousPeriodic()
 		{
 			xMove = pPrefs->GetDouble("2Path1X",0);
 			yMove = pPrefs->GetDouble("2Path1Y",0);
+			am->Set(ControlMode::Position, 500);
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 		}
 		else if (iPath == 2)
 		{
 			xMove = pPrefs->GetDouble("2Path2X", 0);
 			yMove = pPrefs->GetDouble("2Path2Y", 0);
+			am->Set(ControlMode::Position, 500);
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 		}
 		else if (iPath == 3)
 		{
 			xMove = pPrefs->GetDouble("2Path3X", 0);
 			yMove = pPrefs->GetDouble("2Path3Y", 0);
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+			am->Set(ControlMode::Position, 500);
 		}
 
 
@@ -360,7 +436,7 @@ void AutonomousPeriodic()
 			iTurn++;
 		}
 	}
-
+	SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
 
 
 	if (AutonomousToUse == 3)
@@ -400,14 +476,7 @@ void AutonomousPeriodic()
 			iTurn++;
 		}
 	}
-	/*if (pNavGyro->GetYawError() >10)
-	{
-	fRotate = pNavGyro->GetRotate()/2;
-	}
-	else
-	*/
-		fRotate = pNavGyro->GetRotate();
-	//}
+	fRotate = pNavGyro->GetRotate();
 	m_robotDrive->DriveCartesian(xMove, yMove, fRotate, 0.0);
 	SmartDashboard::PutNumber("Turn Number", iTurn);
 } // end AutonomousPeriodic()
@@ -465,9 +534,9 @@ void TeleopPeriodic() {
     	pNavGyro->bPresetTurning = false;
     }
     // Handle manual rotation
-    //bAllowRotate = pclXbox->GetTriggerAxis(frc::XboxController::kRightHand)>.5;
-    bAllowRotate = pclXbox->GetX(frc::XboxController::kRightHand)>.1||
-    			   pclXbox->GetX(frc::XboxController::kRightHand)<-.1;
+    bAllowRotate = pclXbox->GetTriggerAxis(frc::XboxController::kRightHand)>.5;
+    //bAllowRotate = pclXbox->GetX(frc::XboxController::kRightHand)>.1||
+    	//		   pclXbox->GetX(frc::XboxController::kRightHand)<-.1;
     if (bAllowRotate)
 	{
 	fRotate = pclXbox->GetX(frc::XboxController::kRightHand);
@@ -538,17 +607,16 @@ void TeleopPeriodic() {
 	SmartDashboard::PutNumber("limitswith 1",limitArm->Get());
 
     climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kForward: frc::DoubleSolenoid::Value::kReverse);
-    SmartDashboard::PutNumber("Arm Control Number", ArmControlMode);
     if (pclXbox2->GetStickButtonPressed(frc::XboxController::kRightHand))
     {
     	ArmControlMode--;
     	ArmControlMode = fabs(ArmControlMode);
     	positionValue = -2;
     }
-    pPrefs->PutInt("Preset Position", positionValue);
+    //pPrefs->PutInt("Preset Position", positionValue);
 
     wm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
-
+    iom->Set(pclXbox2->GetX(frc::XboxController::kLeftHand));
 
 // presets
     if (ArmControlMode == 0)
