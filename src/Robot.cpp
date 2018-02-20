@@ -91,6 +91,7 @@ class Robot: public frc::IterativeRobot {
 	int AutonomousToUse;
 	int iTurn = 0;
 	int iPath = 0;
+	int controlPot;
 	float fVisionMaxTargetSize;
 	frc::Preferences *pPrefs;
 
