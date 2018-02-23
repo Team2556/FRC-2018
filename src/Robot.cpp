@@ -91,7 +91,7 @@ class Robot: public frc::IterativeRobot {
 	int AutonomousToUse;
 	int iTurn = 0;
 	int iPath = 0;
-	int controlPot;
+	int controlPot = 0;
 	float fVisionMaxTargetSize;
 	frc::Preferences *pPrefs;
 
@@ -483,16 +483,6 @@ void AutonomousPeriodic()
 			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn1Amount",0)));
 			iTurn++;
 		}
-		if (iTurn == 2 && timer>pPrefs->GetDouble("2Turn2Start", 0))
-		{
-			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn2Amount",0)));
-			iTurn++;
-		}
-		if (iTurn == 3 && timer>pPrefs->GetDouble("2Turn3Start", 0))
-		{
-			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn3Amount",0)));
-			iTurn++;
-		}
 
 
 		if (timer<pPrefs->GetDouble("2CubeDropPoint", 0))
@@ -503,14 +493,12 @@ void AutonomousPeriodic()
 		{
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
-		am->Set(ControlMode::Position, ARM_POT_SCALE);
+		am->Set(ControlMode::Position, ARM_POT_SWITCH);
 	}
-	SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
-
 
 	if (AutonomousToUse == 3)
 	{
-		if (timer<pPrefs->GetFloat("3Path1Start", 0))
+		if (iPath<=0 && timer<pPrefs->GetFloat("3Path1Start", 0))
 		{
 			iPath = 0;
 		}
@@ -518,20 +506,16 @@ void AutonomousPeriodic()
 		{
 			iPath = 1;
 		}
-		else if(timer>(pPrefs->GetFloat("3Path2Start", 0)) && bTrackLock == false)
+		else if(timer>(pPrefs->GetFloat("3Path2Start", 0)) && (bTrackLock) == false)
 		{
 			iPath =2;
 		}
-		else if(bTrackLock == true)
+		else
 		{
 			iPath = 3;
 		}
-		else
-		{
-			iPath = 4;
-		}
 
-		pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
+
 		if (iPath == 0)
 		{
 			xMove = 0;
@@ -547,68 +531,6 @@ void AutonomousPeriodic()
 		else if (iPath == 2)
 		{
 			xMove = -.5;
-			yMove = 0;
-			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
-			am->Set(ControlMode::Position, 500);
-		}
-		else if (iPath == 3)
-		{
-			xMove = fTrackErrorX * 1.0;
-			yMove = (fVisionMaxTargetSize - fTargetSizeX) * 2.0;
-			yMove = fmin(yMove,  0.25);
-			yMove= fmax(yMove, -0.25);
-			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
-			am->Set(ControlMode::Position, 500);
-		}
-		else
-		{
-			xMove = 0;
-			yMove = 0;
-		}
-
-
-		if (iTurn == 0 && timer>pPrefs->GetDouble("3Turn0Start", 0))
-		{
-			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("3Turn0Amount",0)));
-			iTurn++;
-		}
-	}
-
-	if (AutonomousToUse == 4)
-	{
-		if (iPath<=0 && timer<pPrefs->GetFloat("4Path1Start", 0))
-		{
-			iPath = 0;
-		}
-		else if (timer>(pPrefs->GetFloat("4Path1Start", 0)) && timer<(pPrefs->GetFloat("4Path1End",0)))
-		{
-			iPath = 1;
-		}
-		else if(timer>(pPrefs->GetFloat("4Path2Start", 0)) && (bTrackLock) == false)
-		{
-			iPath =2;
-		}
-		else
-		{
-			iPath = 3;
-		}
-
-
-		if (iPath == 0)
-		{
-			xMove = 0;
-			yMove = 0;
-		}
-		else if (iPath == 1)
-		{
-			xMove = 0;
-			yMove = 0;
-			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
-			am->Set(ControlMode::Position, 500);
-		}
-		else if (iPath == 2)
-		{
-			xMove = 0;
 			yMove = 0;
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 			am->Set(ControlMode::Position, 500);
@@ -654,13 +576,264 @@ void AutonomousPeriodic()
 			xMove = 0;
 			yMove = 0;
 		}
+	}
 
-
-		if (iTurn == 0 && timer>pPrefs->GetDouble("3Turn0Start", 0))
+	if (AutonomousToUse == 4)
+	{
+		if (iPath<=0 && timer<pPrefs->GetFloat("4Path1Start", 0))
 		{
-			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("3Turn0Amount",0)));
+			iPath = 0;
+		}
+		else if (timer>(pPrefs->GetFloat("4Path1Start", 0)) && timer<(pPrefs->GetFloat("4Path1End",0)))
+		{
+			iPath = 1;
+		}
+		else if(timer>(pPrefs->GetFloat("4Path2Start", 0)) && (bTrackLock) == false)
+		{
+			iPath =2;
+		}
+		else
+		{
+			iPath = 3;
+		}
+
+
+		if (iPath == 0)
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+		else if (iPath == 1)
+		{
+			xMove = 0;
+			yMove = .5;
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+			am->Set(ControlMode::Position, 500);
+		}
+		else if (iPath == 2)
+		{
+			xMove = .5;
+			yMove = 0;
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+			am->Set(ControlMode::Position, 500);
+		}
+		else if (iPath == 3)
+		{
+			if (bTrackLock)
+			{
+				if (fTargetSizeX < fVisionMaxTargetSize)
+				{
+					xMove = fTrackErrorX * 1.0;
+					yMove = (fVisionMaxTargetSize - fTargetSizeX) * 2.0;
+					yMove = fmin(yMove,  0.25);
+					yMove = fmax(yMove, -0.25);
+					armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+					printf("Tracking\n");
+				}
+				else
+				{
+					armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+					printf("Finished Tracking\n");
+				}
+			}
+			else
+			{
+				xMove = 0;
+				yMove = .2;
+				armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+				printf("Can't Track\n");
+			}
+			SmartDashboard::PutNumber("Difference From Target Size", fVisionMaxTargetSize - fTargetSizeX);
+			am->Set(ControlMode::Position, 500);
+		}
+		else if (iPath == 4)
+		{
+			xMove = 0;
+			yMove = 0;
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+			am->Set(ControlMode::Position, 500);
+		}
+		else
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+	}
+	if (AutonomousToUse == 5)
+	{
+		if (timer<pPrefs->GetFloat("5Path1Start", 0))
+		{
+			iPath = 0;
+		}
+		else if (timer>(pPrefs->GetFloat("5Path1Start", 0)) && timer<(pPrefs->GetFloat("5Path1End",0)))
+		{
+			iPath = 1;
+		}
+		else if (timer>(pPrefs->GetFloat("5Path2Start", 0)) && timer<(pPrefs->GetFloat("5Path2End",0)))
+		{
+			iPath =2;
+		}
+		else if (timer>(pPrefs->GetFloat("5Path3Start", 0)) && timer<(pPrefs->GetFloat("5Path3End",0)))
+		{
+			iPath = 3;
+		}
+		else if (timer>(pPrefs->GetFloat("5Path4Start", 0)) && timer<(pPrefs->GetFloat("5Path4End",0)))
+		{
+			iPath = 4;
+		}
+		else
+		{
+			iPath = 5;
+		}
+
+
+		if (iPath == 0)
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+		else if (iPath == 1)
+		{
+			xMove = pPrefs->GetDouble("5Path1X",0);
+			yMove = pPrefs->GetDouble("5Path1Y",0);
+		}
+		else if (iPath == 2)
+		{
+			xMove = pPrefs->GetDouble("5Path2X", 0);
+			yMove = pPrefs->GetDouble("5Path2Y", 0);
+		}
+		else if (iPath == 3)
+		{
+			xMove = pPrefs->GetDouble("5Path3X", 0);
+			yMove = pPrefs->GetDouble("5Path3Y", 0);
+		}
+		else if (iPath == 4)
+		{
+			xMove = pPrefs->GetDouble("5Path4X", 0);
+			yMove = pPrefs->GetDouble("5Path4Y", 0);
+		}
+		else
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+
+
+		if (iTurn == 0 && timer>pPrefs->GetDouble("5Turn0Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn0Amount",0)));
 			iTurn++;
 		}
+		if (iTurn == 1 && timer>pPrefs->GetDouble("5Turn1Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn1Amount",0)));
+			iTurn++;
+		}
+
+
+		if (timer<pPrefs->GetDouble("5CubeDropPoint", 0))
+		{
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+		}
+		else
+		{
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+		}
+		am->Set(ControlMode::Position, ARM_POT_SWITCH);
+	}
+
+
+	if (AutonomousToUse == 6)
+	{
+		if (timer<pPrefs->GetFloat("6Path1Start", 0))
+		{
+			iPath = 0;
+		}
+		else if (timer>(pPrefs->GetFloat("6Path1Start", 0)) && timer<(pPrefs->GetFloat("6Path1End",0)))
+		{
+			iPath = 1;
+		}
+		else if (timer>(pPrefs->GetFloat("6Path2Start", 0)) && timer<(pPrefs->GetFloat("6Path2End",0)))
+		{
+			iPath =2;
+		}
+		else if (timer>(pPrefs->GetFloat("6Path3Start", 0)) && timer<(pPrefs->GetFloat("6Path3End",0)))
+		{
+			iPath = 3;
+		}
+		else if (timer>(pPrefs->GetFloat("6Path4Start", 0)) && timer<(pPrefs->GetFloat("6Path4End",0)))
+		{
+			iPath = 4;
+		}
+		else
+		{
+			iPath = 5;
+		}
+
+
+		if (iPath == 0)
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+		else if (iPath == 1)
+		{
+			xMove = pPrefs->GetDouble("6Path1X",0);
+			yMove = pPrefs->GetDouble("6Path1Y",0);
+		}
+		else if (iPath == 2)
+		{
+			xMove = pPrefs->GetDouble("6Path2X", 0);
+			yMove = pPrefs->GetDouble("6Path2Y", 0);
+		}
+		else if (iPath == 3)
+		{
+			xMove = pPrefs->GetDouble("6Path3X", 0);
+			yMove = pPrefs->GetDouble("6Path3Y", 0);
+		}
+		else if (iPath == 4)
+		{
+			xMove = pPrefs->GetDouble("6Path4X", 0);
+			yMove = pPrefs->GetDouble("6Path4Y", 0);
+		}
+		else
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+
+
+		if (iTurn == 0 && timer>pPrefs->GetDouble("6Turn0Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("6Turn0Amount",0)));
+			iTurn++;
+		}
+		if (iTurn == 1 && timer>pPrefs->GetDouble("6Turn1Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("6Turn1Amount",0)));
+			iTurn++;
+		}
+		if (iTurn == 2 && timer>pPrefs->GetDouble("6Turn2Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("6Turn2Amount",0)));
+			iTurn++;
+		}
+		if (iTurn == 3 && timer>pPrefs->GetDouble("6Turn3Start", 0))
+		{
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("6Turn3Amount",0)));
+			iTurn++;
+		}
+
+
+		if (timer<pPrefs->GetDouble("6CubeDropPoint", 0))
+		{
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+		}
+		else
+		{
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+		}
+		am->Set(ControlMode::Position, ARM_POT_SCALE);
 	}
 	fRotate = pNavGyro->GetRotate();
 	SmartDashboard::PutNumber("X Move", xMove);
