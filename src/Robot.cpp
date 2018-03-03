@@ -864,6 +864,8 @@ void TeleopInit() {
     am->Set(ControlMode::PercentOutput, 0);
 #endif
     positionValue = pPrefs->GetInt("Position Value", 1);
+    controlPot = 200;
+	armPot = am->GetSelectedSensorPosition(0);
     }
 
 
@@ -901,7 +903,7 @@ void TeleopPeriodic() {
     bAllowRotate = pclXbox->GetTriggerAxis(frc::XboxController::kRightHand)>.5;
     //bAllowRotate = pclXbox->GetX(frc::XboxController::kRightHand)>.1||
     	//		   pclXbox->GetX(frc::XboxController::kRightHand)<-.1;
-    if (bAllowRotate)
+    if (!bAllowRotate)
 	{
 	fRotate = pclXbox->GetX(frc::XboxController::kRightHand);
 	fRotate = pNavGyro->CorrectRotate(fRotate);
@@ -980,10 +982,11 @@ void TeleopPeriodic() {
     //pPrefs->PutInt("Preset Position", positionValue);
 
     wm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
+
     iom->Set(pclXbox2->GetX(frc::XboxController::kLeftHand));
 
 // presets
-    if (ArmControlMode == 0)
+    if (ArmControlMode == 1)
     {
     	SmartDashboard::PutString("Arm Control Type", "Preset");
 		static float fPresetValues[3] = {200, 500, 700};
@@ -1029,64 +1032,65 @@ void TeleopPeriodic() {
 		{
 			if(controlPot < fPresetValues[0] )
 			{
-				controlPot=controlPot+5;
+				controlPot=controlPot+1;
 		}
 			else if(controlPot > fPresetValues[0])
 			{
-				controlPot=controlPot-5;
+				controlPot=controlPot-1;
 			}
 			else
 			{
 				controlPot = controlPot + 0;
 			}
 			am->Set(ControlMode::Position,controlPot);
-			iom->Set(ControlMode::Position,500);
+			iom->Set(ControlMode::Position,470);
 		}
 		else if(positionValue == 1)
 		{
-			if(controlPot < fPresetValues[0] )
+			if(controlPot < fPresetValues[1] )
 						{
-							controlPot=controlPot+5;
+							controlPot=controlPot+1;
 		}
-						else if(controlPot > fPresetValues[0])
+						else if(controlPot > fPresetValues[1])
 						{
-							controlPot=controlPot-5;
+							controlPot=controlPot-1;
 						}
 						else
 						{
 							controlPot = controlPot + 0;
 						}
 						am->Set(ControlMode::Position,controlPot);
-			iom->Set(ControlMode::Position,140);
+			iom->Set(ControlMode::Position,120);
 		}
 		else if(positionValue == 2)
 		{
-			if(controlPot < fPresetValues[0] )
+			if(controlPot < fPresetValues[2] )
 						{
-							controlPot=controlPot+5;
+							controlPot=controlPot+1;
 		}
-						else if(controlPot > fPresetValues[0])
+						else if(controlPot > fPresetValues[2])
 		       {
-							controlPot=controlPot-5;
+							controlPot=controlPot-1;
 		       }
 						else
 						{
 							controlPot = controlPot + 0;
 		     }
 						am->Set(ControlMode::Position,controlPot);
-			iom->Set(ControlMode::Position,580);
+			iom->Set(ControlMode::Position,460);
 		}
 
 		 armPot = am->GetSelectedSensorPosition(0);
 		SmartDashboard::PutNumber("Positoin Value", positionValue);
 		SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
 		SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
+		SmartDashboard::PutNumber("control pot", controlPot);
 
     }
 
 
 	//Manual Control
-    else if (ArmControlMode == 1)
+    else if (ArmControlMode == 0)
     {
     SmartDashboard::PutString("Arm Control Type", "Manual");
     //cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
@@ -1112,7 +1116,18 @@ void TeleopPeriodic() {
     	armAuto = armAuto * 3.5;
     }
     else{
+
     	armAuto = 0;
+    }
+
+    if(armAuto > 460)
+    {
+    	armAuto = 460;
+    }
+
+    else if (armAuto < 120)
+    {
+    	armAuto = 120 ;
     }
     am->Set(ControlMode::Position,armPot);
     //iom->Set(ControlMode::Position,armAuto);
