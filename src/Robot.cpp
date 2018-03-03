@@ -308,8 +308,10 @@ void AutonomousPeriodic()
 	double xMove = 0;
 	double yMove = 0;
 	double fRotate = 0;
-#define ARM_POT_SCALE 600
+#define ARM_POT_SCALE 800
+#define IO_POT_SCALE 480
 #define ARM_POT_SWITCH 500
+#define IO_POT_SWITCH 100
     float  fTrackErrorX, fTrackErrorY;
     float  fTargetSizeX, fTargetSizeY;
 	double timer = ((DriverStation::GetInstance().GetMatchTime()-7.5)*-1)+7.5;
@@ -409,6 +411,7 @@ void AutonomousPeriodic()
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
 		am->Set(ControlMode::Position, ARM_POT_SCALE);
+		iom->Set(ControlMode::Position, IO_POT_SCALE);
 	}
 
 
@@ -494,6 +497,7 @@ void AutonomousPeriodic()
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
 		am->Set(ControlMode::Position, ARM_POT_SWITCH);
+		iom->Set(ControlMode::Position, IO_POT_SWITCH);
 	}
 
 	if (AutonomousToUse == 3)
@@ -502,15 +506,15 @@ void AutonomousPeriodic()
 		{
 			iPath = 0;
 		}
-		else if (timer>(pPrefs->GetFloat("3Path1Start", 0)) && timer<(pPrefs->GetFloat("3Path1End",0)))
+		else if (timer>(pPrefs->GetFloat("3Path1Start", 0)) && timer<(pPrefs->GetFloat("3Path1End",.9)))
 		{
 			iPath = 1;
 		}
-		else if(timer>(pPrefs->GetFloat("3Path2Start", 0)) && (bTrackLock) == false)
+		else if(iPath<=2 && timer>(pPrefs->GetFloat("3Path2Start", .9)) && (bTrackLock) == false)
 		{
 			iPath =2;
 		}
-		else
+		else if (iPath<=3)
 		{
 			iPath = 3;
 		}
@@ -539,20 +543,7 @@ void AutonomousPeriodic()
 		{
 			if (bTrackLock)
 			{
-				if (fTargetSizeX < fVisionMaxTargetSize)
-				{
-					xMove = fTrackErrorX * 1.0;
-					yMove = (fVisionMaxTargetSize - fTargetSizeX) * 2.0;
-					yMove = fmin(yMove,  0.25);
-					yMove = fmax(yMove, -0.25);
-					armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
-					printf("Tracking\n");
-				}
-				else
-				{
-					armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
-					printf("Finished Tracking\n");
-				}
+				iPath = 4;
 			}
 			else
 			{
@@ -566,16 +557,29 @@ void AutonomousPeriodic()
 		}
 		else if (iPath == 4)
 		{
-			xMove = 0;
-			yMove = 0;
-			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
-			am->Set(ControlMode::Position, 500);
+			if (fTargetSizeX < fVisionMaxTargetSize)
+			{
+				xMove = fTrackErrorX * 1.0;
+				yMove = (fVisionMaxTargetSize - fTargetSizeX) * 2.0;
+				yMove = fmin(yMove,  0.25);
+				yMove = fmax(yMove, -0.25);
+				armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+				SmartDashboard::PutString("Tracking State", "Tracking");
+			}
+			else
+			{
+				armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+				SmartDashboard::PutString("Tracking State", "Tracking");
+				iPath = 5;
+			}
 		}
 		else
 		{
 			xMove = 0;
 			yMove = 0;
 		}
+		am->Set(ControlMode::Position, ARM_POT_SWITCH);
+		iom->Set(ControlMode::Position, IO_POT_SWITCH);
 	}
 
 	if (AutonomousToUse == 4)
@@ -584,15 +588,15 @@ void AutonomousPeriodic()
 		{
 			iPath = 0;
 		}
-		else if (timer>(pPrefs->GetFloat("4Path1Start", 0)) && timer<(pPrefs->GetFloat("4Path1End",0)))
+		else if (timer>(pPrefs->GetFloat("4Path1Start", 0)) && timer<(pPrefs->GetFloat("4Path1End",.9)))
 		{
 			iPath = 1;
 		}
-		else if(timer>(pPrefs->GetFloat("4Path2Start", 0)) && (bTrackLock) == false)
+		else if(iPath<=2 && timer>(pPrefs->GetFloat("4Path2Start", .9)) && (bTrackLock) == false)
 		{
 			iPath =2;
 		}
-		else
+		else if (iPath<=3)
 		{
 			iPath = 3;
 		}
@@ -621,20 +625,7 @@ void AutonomousPeriodic()
 		{
 			if (bTrackLock)
 			{
-				if (fTargetSizeX < fVisionMaxTargetSize)
-				{
-					xMove = fTrackErrorX * 1.0;
-					yMove = (fVisionMaxTargetSize - fTargetSizeX) * 2.0;
-					yMove = fmin(yMove,  0.25);
-					yMove = fmax(yMove, -0.25);
-					armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
-					printf("Tracking\n");
-				}
-				else
-				{
-					armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
-					printf("Finished Tracking\n");
-				}
+				iPath = 4;
 			}
 			else
 			{
@@ -648,16 +639,29 @@ void AutonomousPeriodic()
 		}
 		else if (iPath == 4)
 		{
-			xMove = 0;
-			yMove = 0;
-			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
-			am->Set(ControlMode::Position, 500);
+			if (fTargetSizeX < fVisionMaxTargetSize)
+			{
+				xMove = fTrackErrorX * 1.0;
+				yMove = (fVisionMaxTargetSize - fTargetSizeX) * 2.0;
+				yMove = fmin(yMove,  0.25);
+				yMove = fmax(yMove, -0.25);
+				armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+				SmartDashboard::PutString("Tracking State", "Tracking");
+			}
+			else
+			{
+				armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+				SmartDashboard::PutString("Tracking State", "Tracking");
+				iPath = 5;
+			}
 		}
 		else
 		{
 			xMove = 0;
 			yMove = 0;
 		}
+		am->Set(ControlMode::Position, ARM_POT_SWITCH);
+		iom->Set(ControlMode::Position, IO_POT_SWITCH);
 	}
 	if (AutonomousToUse == 5)
 	{
@@ -721,12 +725,12 @@ void AutonomousPeriodic()
 
 		if (iTurn == 0 && timer>pPrefs->GetDouble("5Turn0Start", 0))
 		{
-			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn0Amount",0)));
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("5Turn0Amount",0)));
 			iTurn++;
 		}
 		if (iTurn == 1 && timer>pPrefs->GetDouble("5Turn1Start", 0))
 		{
-			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("2Turn1Amount",0)));
+			pNavGyro->SetCommandYaw(pNavGyro->fGyroCommandYaw+(pPrefs->GetDouble("5Turn1Amount",0)));
 			iTurn++;
 		}
 
@@ -740,6 +744,7 @@ void AutonomousPeriodic()
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
 		am->Set(ControlMode::Position, ARM_POT_SWITCH);
+		iom->Set(ControlMode::Position, IO_POT_SWITCH);
 	}
 
 
@@ -834,11 +839,12 @@ void AutonomousPeriodic()
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
 		am->Set(ControlMode::Position, ARM_POT_SCALE);
+		iom->Set(ControlMode::Position, IO_POT_SCALE);
 	}
 	fRotate = pNavGyro->GetRotate();
 	SmartDashboard::PutNumber("X Move", xMove);
 	SmartDashboard::PutNumber("Y Move", yMove);
-	SmartDashboard::PutNumber("Target Size", fVisionMaxTargetSize);
+	SmartDashboard::PutNumber("Target Size", fTargetSizeX);
 
 	m_robotDrive->DriveCartesian(xMove, yMove, fRotate, 0.0);
 	SmartDashboard::PutNumber("Turn Number", iTurn);
