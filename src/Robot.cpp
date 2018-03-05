@@ -308,9 +308,9 @@ void AutonomousPeriodic()
 	double xMove = 0;
 	double yMove = 0;
 	double fRotate = 0;
-#define ARM_POT_SCALE 800
+#define ARM_POT_SCALE 750
 #define IO_POT_SCALE 480
-#define ARM_POT_SWITCH 500
+#define ARM_POT_SWITCH 400
 #define IO_POT_SWITCH 100
     float  fTrackErrorX, fTrackErrorY;
     float  fTargetSizeX, fTargetSizeY;
@@ -534,7 +534,7 @@ void AutonomousPeriodic()
 		}
 		else if (iPath == 2)
 		{
-			xMove = -.5;
+			xMove = -.7;
 			yMove = 0;
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 			am->Set(ControlMode::Position, 500);
@@ -616,7 +616,7 @@ void AutonomousPeriodic()
 		}
 		else if (iPath == 2)
 		{
-			xMove = .5;
+			xMove = .7;
 			yMove = 0;
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 			am->Set(ControlMode::Position, 500);
@@ -841,6 +841,19 @@ void AutonomousPeriodic()
 		am->Set(ControlMode::Position, ARM_POT_SCALE);
 		iom->Set(ControlMode::Position, IO_POT_SCALE);
 	}
+	if (AutonomousToUse == 7)
+	{
+		if (timer<2)
+		{
+			xMove = 0;
+			yMove = .5;
+		}
+		else
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+	}
 	fRotate = pNavGyro->GetRotate();
 	SmartDashboard::PutNumber("X Move", xMove);
 	SmartDashboard::PutNumber("Y Move", yMove);
@@ -878,6 +891,11 @@ void TeleopInit() {
 // ----------------------------------------------------------------------------
 
 void TeleopPeriodic() {
+	float  fTrackErrorX, fTrackErrorY;
+    float  fTargetSizeX, fTargetSizeY;
+    bool bTrackLock;
+    bTrackLock = pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
+    SmartDashboard::PutNumber("TargetSize",fTargetSizeX);
     float 			fXStick = 0.0;
     float 			fYStick = 0.0;
     float			fRotate = 0.0;
@@ -1107,34 +1125,14 @@ void TeleopPeriodic() {
     	armPot= armPot-5;
     }
     //iom->Set(ControlMode::PercentOutput, pclXbox2->GetX(frc::XboxController::kLeftHand));
-    armAuto = 469 - am->GetSelectedSensorPosition(0);
-    if(armAuto < 0)
-    {
-    	armAuto=armAuto*-1;
-    }
-
-    if(armAuto > 469)
-    {
-    	armAuto = armAuto * 2.05;
-    }
-    else if(armAuto < 469)
-    {
-    	armAuto = armAuto * 3.5;
-    }
-    else{
-
-    	armAuto = 0;
-    }
-
-    if(armAuto > 460)
-    {
-    	armAuto = 460;
-    }
-
-    else if (armAuto < 120)
-    {
-    	armAuto = 120 ;
-    }
+   if(am->GetSelectedSensorPosition(0) > 750 || am->GetSelectedSensorPosition(0) < 270)
+   {
+	   iom->Set(pclXbox2->GetX(frc::XboxController::kLeftHand));
+   }
+   else
+   {
+	   iom->Set(ControlMode::Position,95);
+   }
     am->Set(ControlMode::Position,armPot);
     //iom->Set(ControlMode::Position,armAuto);
 
