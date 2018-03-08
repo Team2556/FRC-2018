@@ -312,6 +312,8 @@ void AutonomousPeriodic()
 #define IO_POT_SCALE 480
 #define ARM_POT_SWITCH 400
 #define IO_POT_SWITCH 100
+#define ARM_POT_END 200
+#define IO_POT_END 100
     float  fTrackErrorX, fTrackErrorY;
     float  fTargetSizeX, fTargetSizeY;
 	double timer = ((DriverStation::GetInstance().GetMatchTime()-7.5)*-1)+7.5;
@@ -410,8 +412,16 @@ void AutonomousPeriodic()
 		{
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
-		am->Set(ControlMode::Position, ARM_POT_SCALE);
-		iom->Set(ControlMode::Position, IO_POT_SCALE);
+		if (timer<(pPrefs->GetDouble("1CubeDropPoint", 0)+4))
+		{
+			am->Set(ControlMode::Position, ARM_POT_SCALE);
+			iom->Set(ControlMode::Position, IO_POT_SCALE);
+		}
+		else
+		{
+			am->Set(ControlMode::Position, ARM_POT_END);
+			iom->Set(ControlMode::Position, IO_POT_END);
+		}
 	}
 
 
@@ -496,8 +506,16 @@ void AutonomousPeriodic()
 		{
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
-		am->Set(ControlMode::Position, ARM_POT_SWITCH);
-		iom->Set(ControlMode::Position, IO_POT_SWITCH);
+		if (timer<(pPrefs->GetDouble("2CubeDropPoint", 0)+4))
+		{
+			am->Set(ControlMode::Position, ARM_POT_SWITCH);
+			iom->Set(ControlMode::Position, IO_POT_SWITCH);
+		}
+		else
+		{
+			am->Set(ControlMode::Position, ARM_POT_END);
+			iom->Set(ControlMode::Position, IO_POT_END);
+		}
 	}
 
 	if (AutonomousToUse == 3)
@@ -552,7 +570,6 @@ void AutonomousPeriodic()
 				armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 				printf("Can't Track\n");
 			}
-			SmartDashboard::PutNumber("Difference From Target Size", fVisionMaxTargetSize - fTargetSizeX);
 			am->Set(ControlMode::Position, 500);
 		}
 		else if (iPath == 4)
@@ -564,12 +581,10 @@ void AutonomousPeriodic()
 				yMove = fmin(yMove,  0.25);
 				yMove = fmax(yMove, -0.25);
 				armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
-				SmartDashboard::PutString("Tracking State", "Tracking");
 			}
 			else
 			{
 				armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
-				SmartDashboard::PutString("Tracking State", "Tracking");
 				iPath = 5;
 			}
 		}
@@ -634,7 +649,6 @@ void AutonomousPeriodic()
 				armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 				printf("Can't Track\n");
 			}
-			SmartDashboard::PutNumber("Difference From Target Size", fVisionMaxTargetSize - fTargetSizeX);
 			am->Set(ControlMode::Position, 500);
 		}
 		else if (iPath == 4)
@@ -646,12 +660,10 @@ void AutonomousPeriodic()
 				yMove = fmin(yMove,  0.25);
 				yMove = fmax(yMove, -0.25);
 				armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
-				SmartDashboard::PutString("Tracking State", "Tracking");
 			}
 			else
 			{
 				armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
-				SmartDashboard::PutString("Tracking State", "Tracking");
 				iPath = 5;
 			}
 		}
@@ -743,8 +755,16 @@ void AutonomousPeriodic()
 		{
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
-		am->Set(ControlMode::Position, ARM_POT_SWITCH);
-		iom->Set(ControlMode::Position, IO_POT_SWITCH);
+		if (timer<(pPrefs->GetDouble("5CubeDropPoint", 0)+4))
+		{
+			am->Set(ControlMode::Position, ARM_POT_SWITCH);
+			iom->Set(ControlMode::Position, IO_POT_SWITCH);
+		}
+		else
+		{
+			am->Set(ControlMode::Position, ARM_POT_END);
+			iom->Set(ControlMode::Position, IO_POT_END);
+		}
 	}
 
 
@@ -838,8 +858,27 @@ void AutonomousPeriodic()
 		{
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
-		am->Set(ControlMode::Position, ARM_POT_SCALE);
-		iom->Set(ControlMode::Position, IO_POT_SCALE);
+		if (timer<(pPrefs->GetDouble("6CubeDropPoint", 0)+3))
+		{
+			am->Set(ControlMode::Position, ARM_POT_SCALE);
+			iom->Set(ControlMode::Position, IO_POT_SCALE);
+		}
+		else
+		{
+			static int i = am->GetSelectedSensorPosition(0);
+			if (fabs(i-ARM_POT_END)<10)
+			{
+				iom->Set(ControlMode::Position, 500);
+			}
+			else if(i>ARM_POT_END)
+			{
+				i = i- 12;
+
+			am->Set(ControlMode::Position, i);
+			iom->Set(ControlMode::Position, IO_POT_END);
+			}
+
+		}
 	}
 	if (AutonomousToUse == 7)
 	{
@@ -855,13 +894,8 @@ void AutonomousPeriodic()
 		}
 	}
 	fRotate = pNavGyro->GetRotate();
-	SmartDashboard::PutNumber("X Move", xMove);
-	SmartDashboard::PutNumber("Y Move", yMove);
-	SmartDashboard::PutNumber("Target Size", fTargetSizeX);
 
 	m_robotDrive->DriveCartesian(xMove, yMove, fRotate, 0.0);
-	SmartDashboard::PutNumber("Turn Number", iTurn);
-	SmartDashboard::PutNumber("Path Number", iPath);
 } // end AutonomousPeriodic()
 
 
@@ -895,7 +929,7 @@ void TeleopPeriodic() {
     float  fTargetSizeX, fTargetSizeY;
     bool bTrackLock;
     bTrackLock = pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
-    SmartDashboard::PutNumber("TargetSize",fTargetSizeX);
+    SmartDashboard::PutNumber("NavX Angle", pNavGyro->GetYaw());
     float 			fXStick = 0.0;
     float 			fYStick = 0.0;
     float			fRotate = 0.0;
@@ -910,9 +944,9 @@ void TeleopPeriodic() {
     SmartDashboard::PutString("Rotate", bAllowRotate ? "Yes" : "No ");
 #endif
 #ifdef XBOX
-    fXStick = pclXbox->GetX(frc::XboxController::kLeftHand);
-    fYStick = pclXbox->GetY(frc::XboxController::kLeftHand) * -1.0;
-    fRotate = pclXbox->GetX(frc::XboxController::kRightHand);
+    fXStick = pclXbox->GetX(frc::XboxController::kLeftHand)*0.5;
+    fYStick = (pclXbox->GetY(frc::XboxController::kLeftHand) * -1.0)*0.5;
+    fRotate = pclXbox->GetX(frc::XboxController::kRightHand)*0.5;
 #endif
     if(pclXbox->GetPOV()>-1 && pNavGyro->bPresetTurning == false)
     {
@@ -945,8 +979,7 @@ void TeleopPeriodic() {
 		double Vout = AnalogIn2->GetVoltage() ;
 
 		PsiValue = 250*(Vout/2.09384615)-25;
-		SmartDashboard::PutNumber("Voltage", AnalogIn2->GetVoltage());
-		SmartDashboard::PutNumber("Psi", PsiValue);
+		//SmartDashboard::PutNumber("Psi", PsiValue);
 
 		//Adding a new pneumatic function for potential climber or gear placement
 		//limit switch and manual override
@@ -1142,12 +1175,7 @@ void TeleopPeriodic() {
     SmartDashboard::PutNumber("Positoin Value", positionValue);
     SmartDashboard::PutNumber("Pot position",am->GetSelectedSensorPosition(0));
     SmartDashboard::PutNumber("Pot Position extension" , iom->GetSelectedSensorPosition(0));
-    SmartDashboard::PutNumber("armAuto: ",armAuto);
     SmartDashboard::PutNumber("armPot: ",armPot);
-    SmartDashboard::PutNumber("Front Left", lf->GetMotorOutputPercent());
-    SmartDashboard::PutNumber("Front Right", rf->GetMotorOutputPercent());
-    SmartDashboard::PutNumber("Back Left", lr->GetMotorOutputPercent());
-    SmartDashboard::PutNumber("Back Right", rr->GetMotorOutputPercent());
 
 
 } // end TeleopPeriodic()

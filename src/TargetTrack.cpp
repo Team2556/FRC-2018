@@ -27,6 +27,7 @@ TargetTrack::TargetTrack()
     {
     pPrefs = frc::Preferences::GetInstance();
     UsbCamera = CameraServer::GetInstance()->StartAutomaticCapture();
+    UsbCamera1 = CameraServer::GetInstance()->StartAutomaticCapture();
     fTrackPointX = 0.0;
     fTrackPointY = 0.0;
     }
@@ -58,6 +59,9 @@ void TargetTrack::Init()
     // Start the camera stuff
 	UsbCamera.SetResolution(320, 240);
 	UsbCamera.SetFPS(10);
+
+	UsbCamera1.SetResolution(320, 240);
+	UsbCamera1.SetFPS(10);
 
 	cvSink   = CameraServer::GetInstance()->GetVideo();
 	cvVidOut = CameraServer::GetInstance()->PutVideo("Front Proc", 320, 240);

@@ -17,6 +17,7 @@ public:
     // Data
     frc::Preferences *  pPrefs;
     cs::UsbCamera       UsbCamera;
+    cs::UsbCamera       UsbCamera1;
     cs::CvSink          cvSink;
     cs::CvSource        cvVidOut;
 
