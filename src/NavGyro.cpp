@@ -131,6 +131,21 @@ float  NavGyro::GetRotate()
 		return YawError;
 	}
 
+float	NavGyro::GetDisplacemetX()
+{
+return	pNavX->GetDisplacementX();
+}
+
+float	NavGyro::GetDisplacemetY()
+{
+return	pNavX->GetDisplacementY();
+}
+
+float	NavGyro::GetDisplacemetZ()
+{
+return	pNavX->GetDisplacementZ();
+}
+
 // ----------------------------------------------------------------------------
 // Utilities
 // ----------------------------------------------------------------------------
@@ -155,4 +170,5 @@ float fNormalizeAngle180(float fAngle)
     while (fAngle >=  180.0) fAngle -= 360.0;
     return fAngle;
     }
+
 

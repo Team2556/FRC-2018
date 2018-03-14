@@ -42,6 +42,9 @@ public:
     float  GetYawError();
     float  CorrectRotate(float fRotateLess);
     float  GetRotate();
+    float	GetDisplacemetX();
+    float	GetDisplacemetY();
+    float	GetDisplacemetZ();
 
 };
 

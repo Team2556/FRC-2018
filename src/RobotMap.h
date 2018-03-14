@@ -55,5 +55,8 @@
 #define DIO_LIMIT_SW			0
 #define DIO_LIMIT_ARM			1
 
+// Relay Channels
+#define RELAY_CHAN_TRIGGER		0
+
 
 #endif /* SRC_ROBOTMAP_H_ */
