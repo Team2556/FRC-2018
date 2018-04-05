@@ -36,6 +36,7 @@ public:
 
     // Methods
     void   Init();
+    void   UpdateValues();
     void   SetCommandYaw(float fAngle);
     void   SetCommandYawToCurrent();
     float  GetYaw();

@@ -65,11 +65,23 @@ void NavGyro::Init()
 //    pADXRS->Calibrate();
     fGyroCommandYaw = pADXRS->GetAngle();
 #endif
+    pNavX->ResetDisplacement();
     }
 
 
 // ----------------------------------------------------------------------------
 
+void NavGyro::UpdateValues()
+{
+	float fAccelX = pNavX->GetRawAccelX();
+	float fAccelY = pNavX->GetRawAccelY();
+	int UpdateRate = pNavX->GetRequestedUpdateRate();
+	bool bMoving = pNavX->IsMoving();
+	SmartDashboard::PutNumber("Is Moving", bMoving);
+	pNavX->UpdateDisplacement(fAccelX,fAccelY,UpdateRate,true);
+}
+
+//-----------------------------------------------------------------------------
 void NavGyro::SetCommandYaw(float fAngle)
     {
     fGyroCommandYaw = fNormalizeAngle360(fAngle);
@@ -133,17 +145,17 @@ float  NavGyro::GetRotate()
 
 float	NavGyro::GetDisplacemetX()
 {
-return	pNavX->GetDisplacementX();
+	return	pNavX->GetDisplacementX()*3.28084;
 }
 
 float	NavGyro::GetDisplacemetY()
 {
-return	pNavX->GetDisplacementY();
+	return	pNavX->GetDisplacementY()*3.28084;
 }
 
 float	NavGyro::GetDisplacemetZ()
 {
-return	pNavX->GetDisplacementZ();
+	return	pNavX->GetDisplacementZ()*3.28084;
 }
 
 // ----------------------------------------------------------------------------
