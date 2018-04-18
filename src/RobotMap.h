@@ -46,10 +46,10 @@
 #define CAN_PCM				11
 
 // PCM Channels
-#define PCM_CHAN_CLIMB_UP		2
-#define PCM_CHAN_CLIMB_DOWN		3
-#define PCM_CHAN_ARM_UP			0
-#define PCM_CHAN_ARM_DOWN		1
+#define PCM_CHAN_CLIMB_UP		0
+#define PCM_CHAN_CLIMB_DOWN		1
+#define PCM_CHAN_ARM_UP			2
+#define PCM_CHAN_ARM_DOWN		3
 
 // Digital I/O Channels
 #define DIO_LIMIT_SW			0
