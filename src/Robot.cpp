@@ -18,7 +18,7 @@
 
 #include "RobotMap.h"
 #include "NavGyro.h"
-#include "TargetTrack.h"
+//#include "TargetTrack.h"
 
 #define VISION
 
@@ -80,7 +80,7 @@ class Robot: public frc::IterativeRobot {
 	int armAuto;
 	int armPot;
 	NavGyro	*		pNavGyro;
-	TargetTrack *	pTrack;
+	//TargetTrack *	pTrack;
 
 	int AutonomousToUse;
 	int iTurn = 0;
@@ -89,6 +89,8 @@ class Robot: public frc::IterativeRobot {
 	float fVisionMaxTargetSize;
 	frc::Preferences *pPrefs;
 	Relay *pClimbTrigger;
+
+	cs::UsbCamera		UsbCamera1;
 
 // ----------------------------------------------------------------------------
 // Initialization
@@ -177,7 +179,7 @@ public:
 	pPrefs = frc::Preferences::GetInstance();
     // Setup the gyro
     pNavGyro = new NavGyro();
-    pTrack = new TargetTrack();
+    //pTrack = new TargetTrack();
     pClimbTrigger = new Relay(RELAY_CHAN_TRIGGER,frc::Relay::Direction::kReverseOnly);
     } // end Robot class constructor
 
@@ -192,8 +194,12 @@ void RobotInit() {
 
     // Get the initial starting angle
     pNavGyro->Init();
-    pTrack->Init();
+    //pTrack->Init();
     //SmartDashboard::PutString("Player Station", "M");
+
+    UsbCamera1 = CameraServer::GetInstance()->StartAutomaticCapture();
+          UsbCamera1.SetResolution(160, 120);
+          UsbCamera1.SetFPS(20);
 
 } // end RobotInit()
 
@@ -260,7 +266,7 @@ else */
     // Default is to just drive forward past the line
     // AutonomousToUse = XXX
 
-if (pPrefs->GetInt("AutoPriority", 0) == 0)//0 is scale, 1 is switch
+if (pPrefs->GetInt("AutoPriority", 0) == 0)//0 is scale, 1 is switch, 2 is will not do scale but will do switch
 {
     if (iPosition == 1 && gameData[1] == 'L')
     {
@@ -292,7 +298,7 @@ if (pPrefs->GetInt("AutoPriority", 0) == 0)//0 is scale, 1 is switch
     	AutonomousToUse = 7;
 	}
 }
-else
+else if (pPrefs->GetInt("AutoPriority", 0) == 1)
 {
 	if (iPosition == 1 && gameData[0] == 'L')
 	{
@@ -324,6 +330,30 @@ else
 		AutonomousToUse = 7;
 	}
 }
+else if (pPrefs->GetInt("AutoPriority", 0) == 2)
+{
+	if(iPosition == 1 && gameData[0] =='L')
+	{
+		AutonomousToUse = 2;
+	}
+	else if(iPosition == 3 && gameData[0] == 'R')
+	{
+		AutonomousToUse = 5;
+	}
+	else if (iPosition == 2 && gameData[0] == 'L')
+	{
+		AutonomousToUse = 3;
+	}
+	else if (iPosition == 2 && gameData[0] == 'R')
+	{
+		AutonomousToUse = 4;
+	}
+	else
+	{
+		AutonomousToUse =7;
+	}
+}
+
 
     lf->ConfigOpenloopRamp(0,0);
     lr->ConfigOpenloopRamp(0,0);
@@ -347,9 +377,9 @@ void AutonomousPeriodic()
 	double xMove = 0;
 	double yMove = 0;
 	double fRotate = 0;
-#define ARM_POT_SCALE 535
+#define ARM_POT_SCALE 670
 #define IO_POT_SCALE 480
-#define ARM_POT_SWITCH 335
+#define ARM_POT_SWITCH 430
 #define IO_POT_SWITCH 100
 #define ARM_POT_END 200
 #define IO_POT_END 100
@@ -364,7 +394,7 @@ void AutonomousPeriodic()
 
 	printf("Got Here");
 	bool bTrackLock;
-	bTrackLock = pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
+	//bTrackLock = pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
 	SmartDashboard::PutNumber("Target Size", fTargetSizeX);
 	if (AutonomousToUse == 1)
 	{
@@ -397,7 +427,7 @@ void AutonomousPeriodic()
 		if (iPath == 0)
 		{
 			xMove = 0;
-			yMove = 0;
+			yMove = .1;
 		}
 		else if (iPath == 1)
 		{
@@ -458,9 +488,9 @@ void AutonomousPeriodic()
 		}
 
 			am->Set(ControlMode::Position, ARM_POT_SCALE);
-			if(am->GetSelectedSensorPosition(0)>=ARM_POT_SCALE)
+			if(am->GetSelectedSensorPosition(0)>=ARM_POT_SCALE-20)
 			{
-			iom->Set(.75);
+			iom->Set(ControlMode::Position, pPrefs->GetInt("IOM Out", 50));
 			}
 	}
 
@@ -497,7 +527,7 @@ void AutonomousPeriodic()
 		if (iPath == 0)
 		{
 			xMove = 0;
-			yMove = 0;
+			yMove = .1;
 		}
 		else if (iPath == 1)
 		{
@@ -549,8 +579,8 @@ void AutonomousPeriodic()
 			am->Set(ControlMode::Position, ARM_POT_SWITCH);
 			//iom->Set(ControlMode::Position, IO_POT_SWITCH);
 	}
-
-	// Left vision target from center
+/*
+	// Middle Vision Auto
 	if (AutonomousToUse == 3)
 	{
 		// No movement
@@ -750,7 +780,126 @@ void AutonomousPeriodic()
 		{
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
 		}
+	}*/
+	if (AutonomousToUse == 3)
+	{
+		if (timer<pPrefs->GetFloat("3Path1Start", 0))
+		{
+			iPath = 0;
+		}
+		else if (timer>(pPrefs->GetFloat("3Path1Start", 0)) && timer<(pPrefs->GetFloat("3Path1End",0)))
+		{
+			iPath = 1;
+		}
+		else if (timer>(pPrefs->GetFloat("3Path2Start", 0)) && timer<(pPrefs->GetFloat("3Path2End",0)))
+		{
+			iPath =2;
+		}
+		else if (timer>(pPrefs->GetFloat("3Path3Start", 0)) && timer<(pPrefs->GetFloat("3Path3End",0)))
+		{
+			iPath = 3;
+		}
+		else
+		{
+			iPath = 4;
+		}
+
+		if (iPath == 0)
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+		else if (iPath == 1)
+		{
+			xMove = -.5;
+			yMove = .3;
+		}
+		else if (iPath == 2)
+		{
+			xMove = 0;
+			yMove = .25;
+		}
+		else if (iPath == 3)
+		{
+			xMove = .75;
+			yMove = 0;
+		}
+		else
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+
+		if (timer<pPrefs->GetDouble("3CubeDropPoint", 0))
+		{
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+		}
+		else
+		{
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+		}
+			am->Set(ControlMode::Position, ARM_POT_SWITCH);
 	}
+	if (AutonomousToUse == 4)
+	{
+		if (timer<pPrefs->GetFloat("4Path1Start", 0))
+		{
+			iPath = 0;
+		}
+		else if (timer>(pPrefs->GetFloat("4Path1Start", 0)) && timer<(pPrefs->GetFloat("4Path1End",0)))
+		{
+			iPath = 1;
+		}
+		else if (timer>(pPrefs->GetFloat("4Path2Start", 0)) && timer<(pPrefs->GetFloat("4Path2End",0)))
+		{
+			iPath =2;
+		}
+		else if (timer>(pPrefs->GetFloat("4Path3Start", 0)) && timer<(pPrefs->GetFloat("4Path3End",0)))
+		{
+			iPath = 3;
+		}
+		else
+		{
+			iPath = 4;
+		}
+
+		if (iPath == 0)
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+		else if (iPath == 1)
+		{
+			xMove = .5;
+			yMove = .3;
+		}
+		else if (iPath == 2)
+		{
+			xMove = 0;
+			yMove = .25;
+		}
+		else if (iPath == 3)
+		{
+			xMove = .75;
+			yMove = 0;
+		}
+		else
+		{
+			xMove = 0;
+			yMove = 0;
+		}
+
+		if (timer<pPrefs->GetDouble("4CubeDropPoint", 0))
+		{
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kReverse);
+		}
+		else
+		{
+			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
+		}
+			am->Set(ControlMode::Position, ARM_POT_SWITCH);
+	}
+
 	if (AutonomousToUse == 5)
 	{
 		if (timer<pPrefs->GetFloat("5Path1Start", 0))
@@ -928,9 +1077,9 @@ void AutonomousPeriodic()
 			armSolenoid->Set(frc::DoubleSolenoid::Value::kForward);
 		}
 		am->Set(ControlMode::Position, ARM_POT_SCALE);
-					if(am->GetSelectedSensorPosition(0)>ARM_POT_SCALE)
+					if(am->GetSelectedSensorPosition(0)>ARM_POT_SCALE-20)
 					{
-					iom->Set(.75);
+					iom->Set(ControlMode::Position, pPrefs->GetInt("IOM Out", 50));
 					}
 		/*if (timer<(pPrefs->GetDouble("6CubeDropPoint", 0)+3))
 		{
@@ -993,6 +1142,12 @@ void TeleopInit() {
     controlPot = 200;
 	armPot = am->GetSelectedSensorPosition(0);
 	stateValue = 1;
+	int iomInPref = pPrefs->GetInt("IOM In", 585);
+	pPrefs->PutInt("IOM In", iomInPref);
+	int iomOutPref = pPrefs->GetInt("IOM Out", 54);
+	pPrefs->PutInt("IOM Out", iomOutPref);
+	int iomMidPref = pPrefs->GetInt("IOM Mid", 360);
+	pPrefs->PutInt("IOM Mid", iomMidPref);
     }
 
 
@@ -1003,7 +1158,7 @@ void TeleopPeriodic() {
 	float  fTrackErrorX, fTrackErrorY;
     float  fTargetSizeX, fTargetSizeY;
     bool bTrackLock;
-    bTrackLock = pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
+   // bTrackLock = pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
     SmartDashboard::PutNumber("Target Size", fTargetSizeX);
     float 			fXStick = 0.0;
     float 			fYStick = 0.0;
@@ -1120,8 +1275,8 @@ void TeleopPeriodic() {
 
 	SmartDashboard::PutNumber("limitswitch 1",limitArm->Get());
 
-	climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
-	//pClimbTrigger->Set(pclXbox2->GetStartButton() ? frc::Relay::Value::kReverse : frc::Relay::Value::kOff);
+	//climbSolenoid->Set(pclXbox2->GetYButton() ? frc::DoubleSolenoid::Value::kReverse : frc::DoubleSolenoid::Value::kOff);
+	pClimbTrigger->Set(pclXbox2->GetStartButton() ? frc::Relay::Value::kReverse : frc::Relay::Value::kOff);
     //pPrefs->PutInt("Preset Position", positionValue);
     if(pclXbox2->GetY(frc::XboxController::kLeftHand)<-0.4)
     {
@@ -1142,10 +1297,14 @@ void TeleopPeriodic() {
     SmartDashboard::PutString("Arm Control Type", "Manual");
     //cm->Set(pclXbox2->GetY(frc::XboxController::kLeftHand));
     if(pclXbox2->GetTriggerAxis(frc::XboxController::kRightHand)> 0.1){
-	armPot= armPot+15;
+	armPot= armPot+5;
     }
     else if(pclXbox2->GetTriggerAxis(frc::XboxController::kLeftHand)> 0.1){
-    	armPot= armPot-15;
+    	armPot= armPot-5;
+    }
+    else
+    {
+    	armPot = am->GetSelectedSensorPosition(0);
     }
 
     /*if(pclXbox2->GetYButtonPressed())
@@ -1166,21 +1325,26 @@ void TeleopPeriodic() {
 
     if(am->GetSelectedSensorPosition(0) >=pPrefs->GetInt("Upper Grab Height", 1023) && am->GetSelectedSensorPosition(0) <=pPrefs->GetInt("Upper Scale Height", 1023) )
     {
-    	iom->Set(ControlMode::Position, 585);
+    	iom->Set(ControlMode::Position, pPrefs->GetInt("IOM In", 585));
+    	/*if(iom->GetSelectedSensorPosition(0)<= pPrefs->GetInt("IOM In",600))
+    	{
+    		am->Set(ControlMode::PercentOutput, 0);
+    	}*/
     }
+
     else if( (am->GetSelectedSensorPosition(0) < pPrefs->GetInt("Upper Grab Height", 1023) &&  am->GetSelectedSensorPosition(0) > pPrefs->GetInt("Lower Grab Height", 0))|| am->GetSelectedSensorPosition(0) > pPrefs->GetInt("Upper Scale Height", 1023))
     {
     	 if (pclXbox2->GetBumper(frc::XboxController::kLeftHand) && pclXbox2->GetBumper(frc::XboxController::kRightHand) )
     	        {
-    	        	iom->Set(ControlMode::Position, 360);
+    	        	iom->Set(ControlMode::Position, pPrefs->GetInt("IOM Mid", 360));
     	        }
     	    else if(pclXbox2->GetBumper(frc::XboxController::kRightHand))
     	    {
-    	    	iom->Set(ControlMode::Position, 585);
+    	    	iom->Set(ControlMode::Position, pPrefs->GetInt("IOM In", 585));
     	    }
     	    else if(pclXbox2->GetBumper(frc::XboxController::kLeftHand))
     	    {
-    	    	iom->Set(ControlMode::Position, 54);
+    	    	iom->Set(ControlMode::Position, pPrefs->GetInt("IOM Out", 54));
     	    }
     	    else
     	    {
