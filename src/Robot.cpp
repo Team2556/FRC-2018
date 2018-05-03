@@ -373,7 +373,7 @@ else if (pPrefs->GetInt("AutoPriority", 0) == 2)
 
 void AutonomousPeriodic()
 {
-	static bool bStartedTracking = false;
+//	static bool bStartedTracking = false;
 	double xMove = 0;
 	double yMove = 0;
 	double fRotate = 0;
@@ -383,8 +383,8 @@ void AutonomousPeriodic()
 #define IO_POT_SWITCH 100
 #define ARM_POT_END 200
 #define IO_POT_END 100
-    float  fTrackErrorX, fTrackErrorY;
-    float  fTargetSizeX, fTargetSizeY;
+//    float  fTrackErrorX, fTrackErrorY;
+//    float  fTargetSizeX, fTargetSizeY;
 	double timer = (((DriverStation::GetInstance().GetMatchTime()-7.5)*-1)+7.5)-2;
 
 	SmartDashboard::PutNumber("Path", iPath);
@@ -393,9 +393,9 @@ void AutonomousPeriodic()
 		SmartDashboard::PutNumber("Autonomous Number", AutonomousToUse);
 
 	printf("Got Here");
-	bool bTrackLock;
+//	bool bTrackLock;
 	//bTrackLock = pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
-	SmartDashboard::PutNumber("Target Size", fTargetSizeX);
+//	SmartDashboard::PutNumber("Target Size", fTargetSizeX);
 	if (AutonomousToUse == 1)
 	{
 		if (timer<pPrefs->GetFloat("1Path1Start", 0))
@@ -1155,11 +1155,11 @@ void TeleopInit() {
 
 void TeleopPeriodic() {
 	pNavGyro->UpdateValues();
-	float  fTrackErrorX, fTrackErrorY;
-    float  fTargetSizeX, fTargetSizeY;
-    bool bTrackLock;
+//	float  fTrackErrorX, fTrackErrorY;
+//    float  fTargetSizeX, fTargetSizeY;
+//    bool bTrackLock;
    // bTrackLock = pTrack->GetTrackError(&fTrackErrorX, &fTrackErrorY, &fTargetSizeX, &fTargetSizeY);
-    SmartDashboard::PutNumber("Target Size", fTargetSizeX);
+//    SmartDashboard::PutNumber("Target Size", fTargetSizeX);
     float 			fXStick = 0.0;
     float 			fYStick = 0.0;
     float			fRotate = 0.0;
@@ -1221,10 +1221,9 @@ void TeleopPeriodic() {
     {
     	m_robotDrive->DriveCartesian(fYStick, -fXStick, fRotate,0);
     }
-		float PsiValue;
-		double Vout = AnalogIn2->GetVoltage() ;
-
-		PsiValue = 250*(Vout/2.09384615)-25;
+//		float PsiValue;
+//		double Vout = AnalogIn2->GetVoltage() ;
+//		PsiValue = 250*(Vout/2.09384615)-25;
 		//SmartDashboard::PutNumber("Psi", PsiValue);
 
 		//Adding a new pneumatic function for potential climber or gear placement
